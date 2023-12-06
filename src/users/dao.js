@@ -9,15 +9,17 @@ const userSchema = new mongoose.Schema(
     role: {
       type: String,
       enum: ["ADMIN", "USER"],
-      default: "USER",
+      required: true,
     },
+    coins: { type: Number, required: true },
   },
   { collection: "users" }
 );
 
 const model = mongoose.model("users", userSchema);
 
-export const createUser = (user) => model.create(user);
+export const createUser = (user) => model.create({...user, role: "USER", coins: 500});
+export const createAdmin = (user) => model.create({ ...user, role: "ADMIN", coins: 9999999});
 export const findAllUsers = () => model.find();
 export const findUserById = (userId) => model.findById(userId);
 export const findUserByUsername = (username) =>
