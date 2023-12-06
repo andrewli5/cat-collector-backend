@@ -16,16 +16,20 @@ const userSchema = new mongoose.Schema(
   { collection: "users" }
 );
 
-const model = mongoose.model("users", userSchema);
 
-export const createUser = (user) => model.create({...user, role: "USER", coins: 500});
-export const createAdmin = (user) => model.create({ ...user, role: "ADMIN", coins: 9999999});
-export const findAllUsers = () => model.find();
+const usersModel = mongoose.model("users", userSchema);
+
+export const createUser = (user) => usersModel.create({...user, role: "USER", coins: 500});
+export const createAdmin = (user) => usersModel.create({ ...user, role: "ADMIN", coins: 9999999});
+export const findAllUsers = () => usersModel.find();
 export const findUserByUsername = (username) =>
-  model.findOne({ username: username });
+  usersModel.findOne({ username: username });
 export const findUserByCredentials = (username, password) =>
-  model.findOne({ username, password });
+  usersModel.findOne({ username, password });
+export const updateUserInfo = (username, userInfo) =>
+  usersModel.updateOne({ username: username }, { $set: userInfo });
 export const updateUserCoins = (username, coins) =>
-  model.updateOne({ username: username }, { $set: { coins } });
+  usersModel.updateOne({ username: username }, { $set: { coins } });
+
 
 

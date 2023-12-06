@@ -4,6 +4,7 @@ import UserRoutes from "./users/routes.js";
 import mongoose from "mongoose";
 import session from "express-session";
 import "dotenv/config";
+import CatRoutes from "./cats/routes.js";
 
 const CONNECTION_STRING = process.env.DB_CONNECTION_STRING
 mongoose.connect(CONNECTION_STRING);
@@ -33,4 +34,5 @@ app.use(
 app.use(session(sessionOptions));
 app.use(express.json());
 UserRoutes(app);
+CatRoutes(app);
 app.listen(process.env.PORT || 4000);
