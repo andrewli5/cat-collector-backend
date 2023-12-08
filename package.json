@@ -5,7 +5,8 @@
   "description": "",
   "main": "src/app.js",
   "scripts": {
-    "start": "nodemon"
+    "start": "nodemon",
+    "format": "prettier --write \"src/**/*.{js,jsx}\""
   },
   "author": "",
   "license": "ISC",

@@ -1,4 +1,10 @@
-import { INVALID_CREDENTIALS_MSG, INVALID_REQUEST_SENDER_MSG, UNAUTHORIZED_MSG, USER_NOT_FOUND_MSG, USERNAME_TAKEN_MSG } from "../constants.js";
+import {
+  INVALID_CREDENTIALS_MSG,
+  INVALID_REQUEST_SENDER_MSG,
+  UNAUTHORIZED_MSG,
+  USER_NOT_FOUND_MSG,
+  USERNAME_TAKEN_MSG,
+} from "../constants.js";
 import * as dao from "./dao.js";
 
 export default function UserRoutes(app) {
@@ -59,7 +65,7 @@ export default function UserRoutes(app) {
     const { username } = req.params;
     const user = await dao.findUserByUsername(username);
     if (!user) {
-      res.status(404).json({  });
+      res.status(404).json({});
       return;
     }
     res.json(user);
@@ -90,7 +96,7 @@ export default function UserRoutes(app) {
     const { username } = req.params;
     const { from_username, firstName, lastName, role, coins } = req.body;
 
-    if (role || coins || (from_username !== username)) {
+    if (role || coins || from_username !== username) {
       const from_user = await dao.findUserByUsername(from_username);
       if (!from_user) {
         res.status(404).json({ message: INVALID_REQUEST_SENDER_MSG });
@@ -101,16 +107,21 @@ export default function UserRoutes(app) {
       }
     }
 
-    const status = await dao.updateUserInfo(username, { firstName, lastName, role, coins });
+    const status = await dao.updateUserInfo(username, {
+      firstName,
+      lastName,
+      role,
+      coins,
+    });
     res.json(status);
   };
-  
+
   app.get("/api/users/:username", getUserByUsername);
   app.get("/api/users", getAllUsers);
   app.put("/api/users/:username/coins", updateUserCoins);
   app.put("/api/users/:username", updateUserInfo);
   app.post("/api/users/signin", signIn);
   app.post("/api/users/signout", signOut);
-  app.post("/api/users/signup-user", signUpAsUser);
-  app.post("/api/users/signup-admin", signUpAsAdmin);
+  app.post("/api/users/signup/user", signUpAsUser);
+  app.post("/api/users/signup/admin", signUpAsAdmin);
 }

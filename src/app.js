@@ -6,7 +6,7 @@ import session from "express-session";
 import "dotenv/config";
 import CatRoutes from "./cats/routes.js";
 
-const CONNECTION_STRING = process.env.DB_CONNECTION_STRING
+const CONNECTION_STRING = process.env.DB_CONNECTION_STRING;
 mongoose.connect(CONNECTION_STRING);
 
 const sessionOptions = {
@@ -29,7 +29,7 @@ app.use(
   cors({
     origin: [process.env.FRONTEND_URL_DEV, process.env.FRONTEND_URL_PROD],
     credentials: true,
-  })
+  }),
 );
 app.use(session(sessionOptions));
 app.use(express.json());
