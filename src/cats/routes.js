@@ -22,7 +22,7 @@ export default function CatRoutes(app) {
     }
 
     const ownershipList = await dao.findOwnershipListByUsername(username);
-    const ownedBreeds = ownershipList.map((ownership) => ownership.breed);
+    const ownedBreeds = ownershipList.map((ownership) => ownership.breed) || [];
     if (ownedBreeds.includes("all")) {
       const allBreeds = await getBreeds();
       res.json(allBreeds);
