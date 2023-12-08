@@ -8,11 +8,6 @@ export default function CatRoutes(app) {
     return catList.map((cat) => cat.breed);
   };
 
-  const getCats = async () => {
-    const catList = await dao.getCats();
-    return catList;
-  };
-
   const getCatsByUsername = async (req, res) => {
     const { username } = req.params;
     const user = await usersDao.findUserByUsername(username);
