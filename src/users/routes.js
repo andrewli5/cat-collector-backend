@@ -17,7 +17,7 @@ export default function UserRoutes(app) {
 
   const signIn = async (req, res) => {
     const { username, password } = req.body;
-    const currentUser = await dao.findUserByCredentials(username, password);
+    const currentUser = await dao.findUserByCredentials(username, password);  
     if (!currentUser) {
       res.status(401).json({ message: INVALID_CREDENTIALS_MSG });
       return;
@@ -65,7 +65,7 @@ export default function UserRoutes(app) {
     const { username } = req.params;
     const user = await dao.findUserByUsername(username);
     if (!user) {
-      res.status(404).json({});
+      res.status(404).json({ message: USER_NOT_FOUND_MSG });
       return;
     }
     res.json(user);
@@ -116,8 +116,8 @@ export default function UserRoutes(app) {
     res.json(status);
   };
 
-  app.get("/api/users/:username", getUserByUsername);
   app.get("/api/users", getAllUsers);
+  app.get("/api/users/:username", getUserByUsername);
   app.put("/api/users/:username/coins", updateUserCoins);
   app.put("/api/users/:username", updateUserInfo);
   app.post("/api/users/signin", signIn);
