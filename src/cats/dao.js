@@ -27,6 +27,10 @@ export const findOwnershipListByUsername = (username) => {
   return ownershipsModel.find({ username: username });
 };
 
+export const createOwnership = (username, breed) => {
+  return ownershipsModel.create({ username: username, breed: breed });
+};
+
 export const getCatsByRarity = (rarity) => {
   return raritiesModel.find({ rarity: rarity });
 };
