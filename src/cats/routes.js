@@ -37,6 +37,11 @@ export default function CatRoutes(app) {
     return ownershipList.map((ownership) => ownership.breed) || [];
   }
 
+  const getFavoritedBreedsByUsername = async (username) => {
+    const favoriteList = await dao.findFavoriteListByUsername(username);
+    return favoriteList.map((favorite) => favorite.breed) || [];
+  }
+
   const getCatsByUsername = async (req, res) => {
     const { username } = req.params;
     const user = await usersDao.findUserByUsername(username);
@@ -53,6 +58,23 @@ export default function CatRoutes(app) {
       res.json(ownedBreeds);
     }
   };
+
+  const getFavoritedCatsByUsername = async (req, res) => {
+    const { username } = req.params;
+    const user = await usersDao.findUserByUsername(username);
+    if (!user) {
+      res.status(404).json({ message: USER_NOT_FOUND_MSG });
+      return;
+    }
+
+    const favoritedBreeds = await getFavoritedBreedsByUsername(username);
+    if (favoritedBreeds.includes("all")) {
+      const allBreeds = await getBreeds();
+      res.json(allBreeds);
+    } else {
+      res.json(favoritedBreeds);
+    }
+  }
 
   const getCatsByRarity = async (req, res) => {
     const { rarity } = req.params;
@@ -106,6 +128,7 @@ export default function CatRoutes(app) {
   }
 
   app.get("/api/cats/ownerships/:username", getCatsByUsername);
+  app.get("/api/cats/favorites/:username", getFavoritedCatsByUsername);
   app.get("/api/cats/rarities/:rarity", getCatsByRarity);
   app.get("/api/cats/roll/:username", rollCatForUser);
 }

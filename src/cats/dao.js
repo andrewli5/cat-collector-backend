@@ -8,6 +8,15 @@ const ownershipSchema = new mongoose.Schema(
   { collection: "ownerships" },
 );
 
+const favoriteSchema = new mongoose.Schema(
+  {
+    username: { type: String, required: true },
+    breed: { type: String, required: true },
+  },
+  { collection: "favorites" },
+);
+
+
 const raritySchema = new mongoose.Schema(
   {
     breed: { type: String, required: true },
@@ -21,11 +30,16 @@ const raritySchema = new mongoose.Schema(
 );
 
 const ownershipsModel = mongoose.model("ownerships", ownershipSchema);
+const favoritesModel = mongoose.model("favorites", favoriteSchema);
 const raritiesModel = mongoose.model("rarities", raritySchema);
 
 export const findOwnershipListByUsername = (username) => {
   return ownershipsModel.find({ username: username });
 };
+
+export const findFavoriteListByUsername = (username) => {
+  return favoritesModel.find({ username: username});
+}
 
 export const createOwnership = (username, breed) => {
   return ownershipsModel.create({ username: username, breed: breed });
