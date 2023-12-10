@@ -136,11 +136,16 @@ export default function UserRoutes(app) {
     const upgrades = upgradesList.map((upgrade) => upgrade.upgrade) || [];
 
     res.json({
-      ...user,
+      username: user.username,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      role: user.role,
+      coins: user.coins,
       cats,
       favorites,
       upgrades,
     });
+    
   };
 
   app.get("/api/users", getAllUsers);
