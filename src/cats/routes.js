@@ -165,10 +165,16 @@ export default function CatRoutes(app) {
   };
 
 
+  const getAllCatRarities = async (req, res) => {
+    const rarities = await dao.getCats();
+    res.json(rarities);
+  }
+
   app.get("/api/cats/ownerships/:username", getCatsByUsername);
   app.get("/api/cats/favorites/:username", getFavoritedCatsByUsername);
   app.post("/api/cats/favorites/:username", addUserFavorites);
   app.delete("/api/cats/favorites/:username/:favorite", removeUserFavorites);
   app.get("/api/cats/rarities/:rarity", getCatsByRarity);
   app.get("/api/cats/roll/:username", rollCatForUser);
+  app.get("/api/cats/rarities", getAllCatRarities);
 }
