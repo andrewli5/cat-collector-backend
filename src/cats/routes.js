@@ -27,47 +27,20 @@ const COST_PER_ROLL = 500;
 const NOT_ENOUGH_COINS_MSG = "Not enough coins to roll.";
 
 export default function CatRoutes(app) {
-  const getBreeds = async () => {
-    const catList = await dao.getCats();
-    return catList.map((cat) => cat.breed);
+  const getFavoritedBreedsByUserId = async (userId) => {
+    const favoriteList = await dao.findFavoriteListByUserId(userId);
+    return favoriteList.map((favorite) => favorite.breed) || [];
   };
 
-  const getOwnedBreedsByUsername = async (username) => {
-    const ownershipList = await dao.findOwnershipListByUsername(username);
-    return ownershipList.map((ownership) => ownership.breed) || [];
-  };
-
-  const getFavoritedBreedsByUsername = async (username) => {
-    const favoriteList = await dao.findFavoriteListByUsername(username);
-    return favoriteList.map((favorite) => favorite.favorite) || [];
-  };
-
-  const getCatsByUsername = async (req, res) => {
-    const { username } = req.params;
-    const user = await usersDao.findUserByUsername(username);
+  const getFavoritedCatsByUserId = async (req, res) => {
+    const { userId } = req.params;
+    const user = await usersDao.findUserById(userId);
     if (!user) {
       res.status(404).json({ message: USER_NOT_FOUND_MSG });
       return;
     }
 
-    const ownedBreeds = await getOwnedBreedsByUsername(username);
-    if (ownedBreeds.includes("all")) {
-      const allBreeds = await getBreeds();
-      res.json(allBreeds);
-    } else {
-      res.json(ownedBreeds);
-    }
-  };
-
-  const getFavoritedCatsByUsername = async (req, res) => {
-    const { username } = req.params;
-    const user = await usersDao.findUserByUsername(username);
-    if (!user) {
-      res.status(404).json({ message: USER_NOT_FOUND_MSG });
-      return;
-    }
-
-    const favoritedBreeds = await getFavoritedBreedsByUsername(username);
+    const favoritedBreeds = await getFavoritedBreedsByUserId(userId);
     if (favoritedBreeds.includes("all")) {
       const allBreeds = await getBreeds();
       res.json(allBreeds);
@@ -75,6 +48,60 @@ export default function CatRoutes(app) {
       res.json(favoritedBreeds);
     }
   };
+
+  const addUserFavorites = async (req, res) => {
+    const { userId } = req.params;
+    const { favorite } = req.body;
+
+    const user = await usersDao.findUserById(userId);
+    if (!user) {
+      res.status(404).json({ message: USER_NOT_FOUND_MSG });
+      return;
+    }
+
+    await dao.createFavorite(userId, favorite);
+    res.json({ userId, favorite });
+  };
+
+  const removeUserFavorites = async (req, res) => {
+    const { userId, favorite } = req.params;
+
+    const user = await usersDao.findUserById(userId);
+    if (!user) {
+      res.status(404).json({ message: USER_NOT_FOUND_MSG });
+      return;
+    }
+
+    await dao.removeFavorite(userId, favorite);
+    res.json({ userId, favorite });
+  };
+
+    const getBreeds = async () => {
+      const catList = await dao.getCats();
+      return catList.map((cat) => cat.breed);
+    };
+
+    const getOwnedBreedsByUserId = async (userId) => {
+      const ownershipList = await dao.findOwnershipListByUserId(userId);
+      return ownershipList.map((ownership) => ownership.breed) || [];
+    };
+
+    const getCatsByUserId = async (req, res) => {
+      const { userId } = req.params;
+      const user = await usersDao.findUserById(userId);
+      if (!user) {
+        res.status(404).json({ message: USER_NOT_FOUND_MSG });
+        return;
+      }
+
+      const ownedBreeds = await getOwnedBreedsByUserId(userId);
+      if (ownedBreeds.includes("all")) {
+        const allBreeds = await getBreeds();
+        res.json(allBreeds);
+      } else {
+        res.json(ownedBreeds);
+      }
+    };
 
   const getCatsByRarity = async (req, res) => {
     const { rarity } = req.params;
@@ -106,8 +133,8 @@ export default function CatRoutes(app) {
   };
 
   const rollCatForUser = async (req, res) => {
-    const { username } = req.params;
-    const user = await usersDao.findUserByUsername(username);
+    const { userId } = req.params;
+    const user = await usersDao.findUserById(userId);
     if (!user) {
       res.status(404).json({ message: NOT_ENOUGH_COINS_MSG });
       return;
@@ -120,61 +147,33 @@ export default function CatRoutes(app) {
     const rarity = pickRarity();
     const catList = await dao.getCatsByRarity(rarity);
     const breed = pickBreed(catList);
-    const ownedBreeds = await getOwnedBreedsByUsername(username);
+    const ownedBreeds = await getOwnedBreedsByUserId(userId);
     if (ownedBreeds.includes(breed)) {
       const coinsWorth = Math.floor(
         Math.random() *
           (STANDARD_CAT_VALUES[rarity][1] - STANDARD_CAT_VALUES[rarity][0]) +
           STANDARD_CAT_VALUES[rarity][0]
       );
-      await usersDao.updateUserCoins(username, user.coins + coinsWorth);
+      await usersDao.updateUserCoins(userId, user.coins + coinsWorth);
       res.json({ breed, rarity, duplicate: true, addedCoins: coinsWorth });
       return;
     } else {
-      await dao.createOwnership(username, breed);
-      await usersDao.updateUserCoins(username, user.coins - COST_PER_ROLL);
+      await dao.createOwnership(userId, breed);
+      await usersDao.updateUserCoins(userId, user.coins - COST_PER_ROLL);
       res.json({ breed, rarity, duplicate: false, addedCoins: 0 });
     }
   };
 
-  const addUserFavorites = async (req, res) => {
-    const { username } = req.params;
-    const { favorite } = req.body;
-
-    const user = await usersDao.findUserByUsername(username);
-    if (!user) {
-      res.status(404).json({ message: USER_NOT_FOUND_MSG });
-      return;
-    }
-
-    await dao.createFavorite(username, favorite);
-    res.json({ username, favorite });
-  };
-
-  const removeUserFavorites = async (req, res) => {
-    const { username, favorite } = req.params;
-
-    const user = await usersDao.findUserByUsername(username);
-    if (!user) {
-      res.status(404).json({ message: USER_NOT_FOUND_MSG });
-      return;
-    }
-
-    await dao.removeFavorite(username, favorite);
-    res.json({ username, favorite });
-  };
-
-
   const getAllCatRarities = async (req, res) => {
     const rarities = await dao.getCats();
     res.json(rarities);
-  }
+  };
 
-  app.get("/api/cats/ownerships/:username", getCatsByUsername);
-  app.get("/api/cats/favorites/:username", getFavoritedCatsByUsername);
-  app.post("/api/cats/favorites/:username", addUserFavorites);
-  app.delete("/api/cats/favorites/:username/:favorite", removeUserFavorites);
+  app.get("/api/cats/ownerships/:userId", getCatsByUserId);
+  app.get("/api/cats/favorites/:userId", getFavoritedCatsByUserId);
+  app.post("/api/cats/favorites/:userId", addUserFavorites);
+  app.delete("/api/cats/favorites/:userId/:favorite", removeUserFavorites);
   app.get("/api/cats/rarities/:rarity", getCatsByRarity);
-  app.get("/api/cats/roll/:username", rollCatForUser);
+  app.get("/api/cats/roll/:userId", rollCatForUser);
   app.get("/api/cats/rarities", getAllCatRarities);
 }

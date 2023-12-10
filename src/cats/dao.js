@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 
 const ownershipSchema = new mongoose.Schema(
   {
-    username: { type: String, required: true },
+    user_id: { type: String, required: true },
     breed: { type: String, required: true },
   },
   { collection: "ownerships" },
@@ -10,11 +10,12 @@ const ownershipSchema = new mongoose.Schema(
 
 const favoritesSchema = new mongoose.Schema(
   {
-    username: { type: String, required: true },
-    favorite: { type: String, required: true },
+    user_id: { type: String, required: true },
+    breed: { type: String, required: true },
   },
   { collection: "favorites" },
 );
+
 
 const raritySchema = new mongoose.Schema(
   {
@@ -32,24 +33,24 @@ const ownershipsModel = mongoose.model("ownerships", ownershipSchema);
 const favoritesModel = mongoose.model("favorites", favoritesSchema);
 const raritiesModel = mongoose.model("rarities", raritySchema);
 
-export const findOwnershipListByUsername = (username) => {
-  return ownershipsModel.find({ username });
+export const findOwnershipListByUserId = (user_id) => {
+  return ownershipsModel.find({ user_id });
 };
 
-export const findFavoriteListByUsername = (username) => {
-  return favoritesModel.find({ username});
+export const findFavoriteListByUserId = (user_id) => {
+  return favoritesModel.find({ user_id });
 }
 
-export const createOwnership = (username, breed) => {
-  return ownershipsModel.create({ username, breed });
+export const createOwnership = (user_id, breed) => {
+  return ownershipsModel.create({ user_id, breed });
 };
 
-export const createFavorite = (username, favorite) => {
-  return favoritesModel.create({ username, favorite });
+export const createFavorite = (user_id, breed)  => {
+  return favoritesModel.create({ user_id, breed });
 };
 
-export const removeFavorite = (username, favorite) => {
-  return favoritesModel.deleteOne({ username, favorite });
+export const removeFavorite = (user_id, breed) => {
+  return favoritesModel.deleteOne({ user_id, breed });
 }
 
 export const getCatsByRarity = (rarity) => {

@@ -1,8 +1,6 @@
 import {
   INCORRECT_ADMIN_PASSWORD_MSG,
   INVALID_CREDENTIALS_MSG,
-  INVALID_REQUEST_SENDER_MSG,
-  UNAUTHORIZED_MSG,
   USER_NOT_FOUND_MSG,
   USERNAME_TAKEN_MSG,
 } from "../constants.js";
@@ -10,10 +8,10 @@ import * as dao from "./dao.js";
 import * as catsDao from "../cats/dao.js";
 
 export default function UserRoutes(app) {
-  const updateUserCoins = async (req, res) => {
-    const { username } = req.params;
+  const updateCoinsByUserId = async (req, res) => {
+    const { userId } = req.params;
     const { coins } = req.body;
-    const status = await dao.updateUserCoins(username, coins);
+    const status = await dao.updateCoinsByUserId(userId, coins);
     res.json(status);
   };
 
@@ -73,73 +71,51 @@ export default function UserRoutes(app) {
     res.json(user);
   };
 
-  // admin-only
-  const getAllUsers = async (req, res) => {
-    const { from_username } = req.body;
-
-    const from_user = await dao.findUserByUsername(from_username);
-    if (!from_user) {
-      res.status(404).json({ message: INVALID_REQUEST_SENDER_MSG });
-      return;
-    } else if (from_user.role !== "ADMIN") {
-      res.status(401).json({ message: UNAUTHORIZED_MSG });
-      return;
-    }
-
+  // admin tools only only
+  const getAllUsers = async (req, res) => {   
     const users = await dao.findAllUsers();
     res.json(users);
   };
 
-  // admin-only if any of these are true:
-  // 1. role changed
-  // 2. coins changed
-  // 3. user is updating another user's info
-  const updateUserInfo = async (req, res) => {
-    const { username } = req.params;
-    const { from_username, firstName, lastName, role, coins } = req.body;
+  // admin tools only
+  const updateUserInfoByUserId = async (req, res) => {
+    const { userId } = req.params;
+    const { username, firstName, lastName, role, coins } = req.body;
 
-    if (role || coins || from_username !== username) {
-      const from_user = await dao.findUserByUsername(from_username);
-      if (!from_user) {
-        res.status(404).json({ message: INVALID_REQUEST_SENDER_MSG });
-        return;
-      } else if (from_user.role !== "ADMIN") {
-        res.status(401).json({ message: UNAUTHORIZED_MSG });
-        return;
-      }
-    }
-
-    const status = await dao.updateUserInfo(username, {
+    const status = await dao.updateUserInfo(userId, {
+      username,
       firstName,
       lastName,
       role,
       coins,
     });
+
     res.json(status);
   };
 
   const getUserData = async (req, res) => {
-    const { username } = req.params;
+    const { userId } = req.params;
     const user = await dao.findUserByUsername(username);
     if (!user) {
       res.status(404).json({ message: USER_NOT_FOUND_MSG });
       return;
     }
 
-    const ownershipList = await catsDao.findOwnershipListByUsername(username);
+    const ownershipList = await catsDao.findOwnershipListByUserId(userId);
     var cats = ownershipList.map((ownership) => ownership.breed) || [];
      if (cats.includes("all")) {
         const allCats = await catsDao.getCats();
         cats = allCats.map((cat) => cat.breed);
      }
     
-    const favoriteList = await catsDao.findFavoriteListByUsername(username);
-    const favorites = favoriteList.map((favorite) => favorite.favorite) || [];
+    const favoriteList = await catsDao.findFavoriteListByUserId(userId);
+    const favorites = favoriteList.map((favorite) => favorite.breed) || [];
 
-    const upgradesList = await dao.findUpgradesByUsername(username);
+    const upgradesList = await dao.findUpgradesByUserId(userId);
     const upgrades = upgradesList.map((upgrade) => upgrade.upgrade) || [];
 
     res.json({
+      _id: user._id,
       username: user.username,
       firstName: user.firstName,
       lastName: user.lastName,
@@ -154,9 +130,9 @@ export default function UserRoutes(app) {
 
   app.get("/api/users", getAllUsers);
   app.get("/api/users/:username", getUserByUsername);
-  app.get("/api/users/:username/data", getUserData);
-  app.put("/api/users/:username/coins", updateUserCoins);
-  app.put("/api/users/:username", updateUserInfo);
+  app.get("/api/users/:userId/data", getUserData);
+  app.put("/api/users/:userId/coins", updateCoinsByUserId);
+  app.put("/api/users/:userId", updateUserInfoByUserId);
   app.post("/api/users/signin", signIn);
   app.post("/api/users/signout", signOut);
   app.post("/api/users/signup/user", signUpAsUser);
