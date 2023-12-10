@@ -16,7 +16,16 @@ const userSchema = new mongoose.Schema(
   { collection: "users" },
 );
 
+const upgradeSchema = new mongoose.Schema(
+  {
+    username: { type: String, required: true },
+    upgrade: { type: String, required: true }, // TODO: define upgrade enums
+  },
+  { collection: "upgrades" },
+);
+
 const usersModel = mongoose.model("users", userSchema);
+const upgradesModel = mongoose.model("upgrades", upgradeSchema);
 
 export const createUser = (user) =>
   usersModel.create({ ...user, role: "USER", coins: 500 });
@@ -31,3 +40,5 @@ export const updateUserInfo = (username, userInfo) =>
   usersModel.updateOne({ username: username }, { $set: userInfo });
 export const updateUserCoins = (username, coins) =>
   usersModel.updateOne({ username: username }, { $set: { coins } });
+export const createUpgrade = (username, upgrade) => upgradesModel.create({ username, upgrade });
+export const findUpgradesByUsername = (username) => upgradesModel.find({ username });

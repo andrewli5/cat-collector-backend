@@ -131,7 +131,11 @@ export default function UserRoutes(app) {
     
     const favoriteList = await catsDao.findFavoriteListByUsername(username);
     const favorites = favoriteList.map((favorite) => favorite.favorite) || [];
-    res.json({ ...user, cats, favorites });
+
+    const upgradesList = await dao.findUpgradesByUsername(username);
+    const upgrades = upgradesList.map((upgrade) => upgrade.upgrade) || [];
+    
+    res.json({ ...user, cats, favorites, upgrades });
   };
 
   app.get("/api/users", getAllUsers);
@@ -143,4 +147,5 @@ export default function UserRoutes(app) {
   app.post("/api/users/signout", signOut);
   app.post("/api/users/signup/user", signUpAsUser);
   app.post("/api/users/signup/admin", signUpAsAdmin);
+  
 }
