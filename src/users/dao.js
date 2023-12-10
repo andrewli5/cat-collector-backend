@@ -42,7 +42,7 @@ export const findUserByCredentials = (username, password) =>
   usersModel.findOne({ username, password });
 
 export const findUserByUserId = (userId) =>
-  usersModel.findOne({ user_id: userId });
+  usersModel.findOne({ _id: userId });
 
 export const updateUserInfoByUserId = (userId, userInfo) =>
   usersModel.updateOne({ user_id: userId }, { $set: userInfo });
