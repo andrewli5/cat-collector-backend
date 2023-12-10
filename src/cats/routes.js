@@ -76,32 +76,32 @@ export default function CatRoutes(app) {
     res.json({ userId, favorite });
   };
 
-    const getBreeds = async () => {
-      const catList = await dao.getCats();
-      return catList.map((cat) => cat.breed);
-    };
+  const getBreeds = async () => {
+    const catList = await dao.getCats();
+    return catList.map((cat) => cat.breed);
+  };
 
-    const getOwnedBreedsByUserId = async (userId) => {
-      const ownershipList = await dao.findOwnershipListByUserId(userId);
-      return ownershipList.map((ownership) => ownership.breed) || [];
-    };
+  const getOwnedBreedsByUserId = async (userId) => {
+    const ownershipList = await dao.findOwnershipListByUserId(userId);
+    return ownershipList.map((ownership) => ownership.breed) || [];
+  };
 
-    const getCatsByUserId = async (req, res) => {
-      const { userId } = req.params;
-      const user = await usersDao.findUserById(userId);
-      if (!user) {
-        res.status(404).json({ message: USER_NOT_FOUND_MSG });
-        return;
-      }
+  const getCatsByUserId = async (req, res) => {
+    const { userId } = req.params;
+    const user = await usersDao.findUserById(userId);
+    if (!user) {
+      res.status(404).json({ message: USER_NOT_FOUND_MSG });
+      return;
+    }
 
-      const ownedBreeds = await getOwnedBreedsByUserId(userId);
-      if (ownedBreeds.includes("all")) {
-        const allBreeds = await getBreeds();
-        res.json(allBreeds);
-      } else {
-        res.json(ownedBreeds);
-      }
-    };
+    const ownedBreeds = await getOwnedBreedsByUserId(userId);
+    if (ownedBreeds.includes("all")) {
+      const allBreeds = await getBreeds();
+      res.json(allBreeds);
+    } else {
+      res.json(ownedBreeds);
+    }
+  };
 
   const getCatsByRarity = async (req, res) => {
     const { rarity } = req.params;
@@ -119,7 +119,7 @@ export default function CatRoutes(app) {
   const pickRarity = () => {
     const totalOdds = Object.values(STANDARD_ODDS).reduce(
       (total, odds) => total + odds,
-      0
+      0,
     );
     const rand = Math.random() * totalOdds;
     let cumulativeProbability = 0;
@@ -152,7 +152,7 @@ export default function CatRoutes(app) {
       const coinsWorth = Math.floor(
         Math.random() *
           (STANDARD_CAT_VALUES[rarity][1] - STANDARD_CAT_VALUES[rarity][0]) +
-          STANDARD_CAT_VALUES[rarity][0]
+          STANDARD_CAT_VALUES[rarity][0],
       );
       await usersDao.updateUserCoins(userId, user.coins + coinsWorth);
       res.json({ breed, rarity, duplicate: true, addedCoins: coinsWorth });

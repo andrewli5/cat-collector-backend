@@ -13,7 +13,7 @@ const userSchema = new mongoose.Schema(
     },
     coins: { type: Number, required: true },
   },
-  { collection: "users" }
+  { collection: "users" },
 );
 
 const upgradeSchema = new mongoose.Schema(
@@ -21,7 +21,7 @@ const upgradeSchema = new mongoose.Schema(
     user_id: { type: String, required: true },
     upgrade: { type: String, required: true }, // TODO: define upgrade enums
   },
-  { collection: "upgrades" }
+  { collection: "upgrades" },
 );
 
 const usersModel = mongoose.model("users", userSchema);
@@ -41,14 +41,17 @@ export const findUserByUsername = (username) =>
 export const findUserByCredentials = (username, password) =>
   usersModel.findOne({ username, password });
 
-export const updateUserInfoByUserId = (user_id, userInfo) =>
-  usersModel.updateOne({ user_id: user_id }, { $set: userInfo });
+export const findUserByUserId = (userId) =>
+  usersModel.findOne({ user_id: userId });
 
-export const updateCoinsByUserId = (user_id, coins) =>
-  usersModel.updateOne({ user_id: user_id }, { $set: { coins } });
+export const updateUserInfoByUserId = (userId, userInfo) =>
+  usersModel.updateOne({ user_id: userId }, { $set: userInfo });
 
-export const createUpgrade = (user_id, upgrade) =>
-  upgradesModel.create({ user_id, username: upgrade });
+export const updateCoinsByUserId = (userId, coins) =>
+  usersModel.updateOne({ user_id: userId }, { $set: { coins } });
 
-export const findUpgradesByUserId = (user_id) =>
-  upgradesModel.find({ user_id });
+export const createUpgrade = (userId, upgrade) =>
+  upgradesModel.create({ user_id: userId, username: upgrade });
+
+export const findUpgradesByUserId = (userId) =>
+  upgradesModel.find({ user_id: userId });

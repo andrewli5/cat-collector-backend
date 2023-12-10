@@ -17,7 +17,7 @@ export default function UserRoutes(app) {
 
   const signIn = async (req, res) => {
     const { username, password } = req.body;
-    const currentUser = await dao.findUserByCredentials(username, password);  
+    const currentUser = await dao.findUserByCredentials(username, password);
     if (!currentUser) {
       res.status(401).json({ message: INVALID_CREDENTIALS_MSG });
       return;
@@ -72,7 +72,7 @@ export default function UserRoutes(app) {
   };
 
   // admin tools only only
-  const getAllUsers = async (req, res) => {   
+  const getAllUsers = async (req, res) => {
     const users = await dao.findAllUsers();
     res.json(users);
   };
@@ -95,7 +95,7 @@ export default function UserRoutes(app) {
 
   const getUserData = async (req, res) => {
     const { userId } = req.params;
-    const user = await dao.findUserByUsername(username);
+    const user = await dao.findUserByUserId(userId);
     if (!user) {
       res.status(404).json({ message: USER_NOT_FOUND_MSG });
       return;
@@ -103,11 +103,11 @@ export default function UserRoutes(app) {
 
     const ownershipList = await catsDao.findOwnershipListByUserId(userId);
     var cats = ownershipList.map((ownership) => ownership.breed) || [];
-     if (cats.includes("all")) {
-        const allCats = await catsDao.getCats();
-        cats = allCats.map((cat) => cat.breed);
-     }
-    
+    if (cats.includes("all")) {
+      const allCats = await catsDao.getCats();
+      cats = allCats.map((cat) => cat.breed);
+    }
+
     const favoriteList = await catsDao.findFavoriteListByUserId(userId);
     const favorites = favoriteList.map((favorite) => favorite.breed) || [];
 
@@ -125,7 +125,6 @@ export default function UserRoutes(app) {
       favorites,
       upgrades,
     });
-    
   };
 
   app.get("/api/users", getAllUsers);
@@ -137,5 +136,4 @@ export default function UserRoutes(app) {
   app.post("/api/users/signout", signOut);
   app.post("/api/users/signup/user", signUpAsUser);
   app.post("/api/users/signup/admin", signUpAsAdmin);
-  
 }
