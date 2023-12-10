@@ -41,14 +41,14 @@ export const findUserByUsername = (username) =>
 export const findUserByCredentials = (username, password) =>
   usersModel.findOne({ username, password });
 
-export const findUserByUserId = (userId) =>
-  usersModel.findOne({ _id: userId });
+export const findUserById = (id) =>
+  usersModel.findOne({ _id: id });
 
 export const updateUserInfoByUserId = (userId, userInfo) =>
-  usersModel.updateOne({ user_id: userId }, { $set: userInfo });
+  usersModel.updateOne({ _id: userId }, { $set: userInfo });
 
 export const updateCoinsByUserId = (userId, coins) =>
-  usersModel.updateOne({ user_id: userId }, { $set: { coins } });
+  usersModel.updateOne({ _id: userId }, { $set: { coins } });
 
 export const createUpgrade = (userId, upgrade) =>
   upgradesModel.create({ user_id: userId, username: upgrade });

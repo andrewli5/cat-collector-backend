@@ -51,7 +51,7 @@ export default function CatRoutes(app) {
 
   const addUserFavorites = async (req, res) => {
     const { userId } = req.params;
-    const { favorite } = req.body;
+    const { breed } = req.body;
 
     const user = await usersDao.findUserById(userId);
     if (!user) {
@@ -59,8 +59,8 @@ export default function CatRoutes(app) {
       return;
     }
 
-    await dao.createFavorite(userId, favorite);
-    res.json({ userId, favorite });
+    await dao.createFavorite(userId, breed);
+    res.json({ userId, breed });
   };
 
   const removeUserFavorites = async (req, res) => {
@@ -154,12 +154,12 @@ export default function CatRoutes(app) {
           (STANDARD_CAT_VALUES[rarity][1] - STANDARD_CAT_VALUES[rarity][0]) +
           STANDARD_CAT_VALUES[rarity][0],
       );
-      await usersDao.updateUserCoins(userId, user.coins + coinsWorth);
+      await usersDao.updateCoinsByUserId(userId, user.coins + coinsWorth);
       res.json({ breed, rarity, duplicate: true, addedCoins: coinsWorth });
       return;
     } else {
       await dao.createOwnership(userId, breed);
-      await usersDao.updateUserCoins(userId, user.coins - COST_PER_ROLL);
+      await usersDao.updateCoinsByUserId(userId, user.coins - COST_PER_ROLL);
       res.json({ breed, rarity, duplicate: false, addedCoins: 0 });
     }
   };

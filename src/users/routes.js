@@ -82,7 +82,7 @@ export default function UserRoutes(app) {
     const { userId } = req.params;
     const { username, firstName, lastName, role, coins } = req.body;
 
-    const status = await dao.updateUserInfo(userId, {
+    const status = await dao.updateUserInfoByUserId(userId, {
       username,
       firstName,
       lastName,
@@ -95,7 +95,7 @@ export default function UserRoutes(app) {
 
   const getUserData = async (req, res) => {
     const { userId } = req.params;
-    const user = await dao.findUserByUserId(userId);
+    const user = await dao.findUserById(userId);
     if (!user) {
       res.status(404).json({ message: USER_NOT_FOUND_MSG });
       return;
