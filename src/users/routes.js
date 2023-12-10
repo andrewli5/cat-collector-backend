@@ -1,4 +1,5 @@
 import {
+  INCORRECT_ADMIN_PASSWORD_MSG,
   INVALID_CREDENTIALS_MSG,
   INVALID_REQUEST_SENDER_MSG,
   UNAUTHORIZED_MSG,
@@ -6,6 +7,7 @@ import {
   USERNAME_TAKEN_MSG,
 } from "../constants.js";
 import * as dao from "./dao.js";
+import * as catsDao from "../cats/dao.js";
 
 export default function UserRoutes(app) {
   const updateUserCoins = async (req, res) => {
@@ -46,13 +48,13 @@ export default function UserRoutes(app) {
   const signUpAsAdmin = async (req, res) => {
     const existingUser = await dao.findUserByUsername(req.body.username);
     if (existingUser) {
-      res.status(400).json({ message: "Username already exists." });
+      res.status(400).json({ message: USERNAME_TAKEN_MSG });
       return;
     }
 
     const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
     if (req.body.admin_password !== ADMIN_PASSWORD) {
-      res.status(401).json({ message: "Incorrect admin password." });
+      res.status(401).json({ message: INCORRECT_ADMIN_PASSWORD_MSG });
       return;
     }
 
@@ -116,8 +118,25 @@ export default function UserRoutes(app) {
     res.json(status);
   };
 
+  const getUserData = async (req, res) => {
+    const { username } = req.params;
+    const user = await dao.findUserByUsername(username);
+    if (!user) {
+      res.status(404).json({ message: USER_NOT_FOUND_MSG });
+      return;
+    }
+
+    const ownershipList = await catsDao.findOwnershipListByUsername(username);
+    const cats = ownershipList.map((ownership) => ownership.breed) || [];
+    
+    const favoriteList = await catsDao.findFavoriteListByUsername(username);
+    const favorites = favoriteList.map((favorite) => favorite.favorite) || [];
+    res.json({ ...user, cats, favorites });
+  };
+
   app.get("/api/users", getAllUsers);
   app.get("/api/users/:username", getUserByUsername);
+  app.get("/api/users/:username/data", getUserData);
   app.put("/api/users/:username/coins", updateUserCoins);
   app.put("/api/users/:username", updateUserInfo);
   app.post("/api/users/signin", signIn);
