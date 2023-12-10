@@ -134,8 +134,13 @@ export default function UserRoutes(app) {
 
     const upgradesList = await dao.findUpgradesByUsername(username);
     const upgrades = upgradesList.map((upgrade) => upgrade.upgrade) || [];
-    
-    res.json({ ...user, cats, favorites, upgrades });
+
+    res.json({
+      ...user,
+      cats,
+      favorites,
+      upgrades,
+    });
   };
 
   app.get("/api/users", getAllUsers);
