@@ -16,7 +16,6 @@ const favoritesSchema = new mongoose.Schema(
   { collection: "favorites" },
 );
 
-
 const raritySchema = new mongoose.Schema(
   {
     breed: { type: String, required: true },
