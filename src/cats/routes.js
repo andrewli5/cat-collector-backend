@@ -82,6 +82,29 @@ export default function CatRoutes(app) {
     res.json(catList.map((cat) => cat.breed));
   };
 
+  // helper for rolling, picks a random breed from a list of cats
+  const pickBreed = (catList) => {
+    const rand = Math.random() * catList.length;
+    return catList[Math.floor(rand)].breed;
+  };
+
+  // helper for rolling, picks a random rarity based on odds
+  const pickRarity = () => {
+    const totalOdds = Object.values(STANDARD_ODDS).reduce(
+      (total, odds) => total + odds,
+      0
+    );
+    const rand = Math.random() * totalOdds;
+    let cumulativeProbability = 0;
+    for (const rarity of RARITIES) {
+      cumulativeProbability += STANDARD_ODDS[rarity];
+      if (rand <= cumulativeProbability) {
+        return rarity;
+      }
+    }
+    return null;
+  };
+
   const rollCatForUser = async (req, res) => {
     const { username } = req.params;
     const user = await usersDao.findUserByUsername(username);
@@ -108,7 +131,7 @@ export default function CatRoutes(app) {
       res.json({ breed, rarity, duplicate: true, addedCoins: coinsWorth });
       return;
     } else {
-      await dao.createOwnership({ username, breed });
+      await dao.createOwnership(username, breed);
       await usersDao.updateUserCoins(username, user.coins - COST_PER_ROLL);
       res.json({ breed, rarity, duplicate: false, addedCoins: 0 });
     }
@@ -141,22 +164,6 @@ export default function CatRoutes(app) {
     res.json({ username, favorite });
   };
 
-  const pickBreed = (catList) => {
-    const rand = Math.random() * catList.length;
-    return catList[Math.floor(rand)].breed;
-  };
-
-  const pickRarity = () => {
-    const rand = Math.random() * STANDARD_ODDS.reduce((a, b) => a + b, 0);
-    let cumulativeProbability = 0;
-    for (const rarity in RARITIES) {
-      cumulativeProbability += STANDARD_ODDS[rarity];
-      if (rand <= cumulativeProbability) {
-        return rarity;
-      }
-    }
-    return null;
-  };
 
   const getAllCatRarities = async (req, res) => {
     const rarities = await dao.getCats();
