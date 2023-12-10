@@ -127,7 +127,11 @@ export default function UserRoutes(app) {
     }
 
     const ownershipList = await catsDao.findOwnershipListByUsername(username);
-    const cats = ownershipList.map((ownership) => ownership.breed) || [];
+    var cats = ownershipList.map((ownership) => ownership.breed) || [];
+     if (cats.includes("all")) {
+        const allCats = await catsDao.getCats();
+        cats = allCats.map((cat) => cat.breed);
+     }
     
     const favoriteList = await catsDao.findFavoriteListByUsername(username);
     const favorites = favoriteList.map((favorite) => favorite.favorite) || [];
