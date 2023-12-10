@@ -19,9 +19,26 @@ const userSchema = new mongoose.Schema(
 const upgradeSchema = new mongoose.Schema(
   {
     user_id: { type: String, required: true },
-    upgrade: { type: String, required: true }, // TODO: define upgrade enums
+    upgrade: {
+      type: String,
+      enum: [
+        "LUCK1",
+        "LUCK2",
+        "LUCK3",
+        "CRIT1",
+        "CRIT2",
+        "CRIT3",
+        "COIN1",
+        "COIN2",
+        "COIN3",
+        "COST1",
+        "COST2",
+        "COST3",
+      ],
+      required: true,
+    }, // TODO: define upgrade enums
   },
-  { collection: "upgrades" },
+  { collection: "upgrades" }
 );
 
 const usersModel = mongoose.model("users", userSchema);
