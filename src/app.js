@@ -1,10 +1,10 @@
 import express from "express";
 import cors from "cors";
-import UserRoutes from "./users/routes.js";
 import mongoose from "mongoose";
 import session from "express-session";
 import "dotenv/config";
-import CatRoutes from "./cats/routes.js";
+import { CatRoutes } from "./cats/routes.js";
+import { UserRoutes } from "./users/routes.js";
 
 const CONNECTION_STRING = process.env.DB_CONNECTION_STRING;
 mongoose.connect(CONNECTION_STRING);

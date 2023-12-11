@@ -1,32 +1,14 @@
 import * as dao from "./dao.js";
 import * as usersDao from "../users/dao.js";
-import { USER_NOT_FOUND_MSG } from "../constants.js";
+import {
+  RARITIES,
+  STANDARD_CAT_VALUES,
+  BASE_ODDS,
+  USER_NOT_FOUND_MSG,
+  getAttributes,
+} from "../constants.js";
 
-const RARITIES = ["C", "U", "R", "E", "L"];
-
-// odds for each category
-const STANDARD_ODDS = {
-  C: 0.8,
-  U: 0.15,
-  R: 0.04,
-  E: 0.009,
-  L: 0.001,
-};
-
-// range of what each category of cat is worth
-const STANDARD_CAT_VALUES = {
-  C: [150, 250],
-  U: [500, 750],
-  R: [1500, 2500],
-  E: [25000, 50000],
-  L: [100000, 150000],
-};
-
-const COST_PER_ROLL = 500;
-
-const NOT_ENOUGH_COINS_MSG = "Not enough coins to roll.";
-
-export default function CatRoutes(app) {
+export function CatRoutes(app) {
   const getFavoritedBreedsByUserId = async (userId) => {
     const favoriteList = await dao.findFavoriteListByUserId(userId);
     return favoriteList.map((favorite) => favorite.breed) || [];
@@ -117,14 +99,14 @@ export default function CatRoutes(app) {
 
   // helper for rolling, picks a random rarity based on odds
   const pickRarity = () => {
-    const totalOdds = Object.values(STANDARD_ODDS).reduce(
+    const totalOdds = Object.values(BASE_ODDS).reduce(
       (total, odds) => total + odds,
-      0,
+      0
     );
     const rand = Math.random() * totalOdds;
     let cumulativeProbability = 0;
     for (const rarity of RARITIES) {
-      cumulativeProbability += STANDARD_ODDS[rarity];
+      cumulativeProbability += BASE_ODDS[rarity];
       if (rand <= cumulativeProbability) {
         return rarity;
       }
@@ -139,28 +121,47 @@ export default function CatRoutes(app) {
       res.status(404).json({ message: NOT_ENOUGH_COINS_MSG });
       return;
     }
-    if (user.coins < COST_PER_ROLL) {
+    if (user.coins < user.rollCost) {
       res.status(400).json({ message: NOT_ENOUGH_COINS_MSG });
       return;
     }
 
+    // start roll
     const rarity = pickRarity();
     const catList = await dao.getCatsByRarity(rarity);
     const breed = pickBreed(catList);
+
+    // check for duplicate
     const ownedBreeds = await getOwnedBreedsByUserId(userId);
+
+    // if duplicate, add coins and return
     if (ownedBreeds.includes(breed)) {
       const coinsWorth = Math.floor(
         Math.random() *
           (STANDARD_CAT_VALUES[rarity][1] - STANDARD_CAT_VALUES[rarity][0]) +
-          STANDARD_CAT_VALUES[rarity][0],
+          STANDARD_CAT_VALUES[rarity][0]
       );
-      await usersDao.updateCoinsByUserId(userId, user.coins + coinsWorth);
+      await usersDao.updateCoinsByUserId(
+        userId,
+        user.coins - user.rollCost + coinsWorth
+      );
       res.json({ breed, rarity, duplicate: true, addedCoins: coinsWorth });
       return;
-    } else {
+    }
+    // if not duplicate, add cat to user's ownerships, update user's stats, and return new stats
+    else {
       await dao.createOwnership(userId, breed);
-      await usersDao.updateCoinsByUserId(userId, user.coins - COST_PER_ROLL);
-      res.json({ breed, rarity, duplicate: false, addedCoins: 0 });
+
+      await usersDao.updateCoinsByUserId(userId, user.coins - user.rollCost);
+      res.json({
+        breed,
+        rarity,
+        duplicate: false,
+        addedCoins: 0,
+        rollCost,
+        coinsPerClick,
+        critChance,
+      });
     }
   };
 
@@ -176,4 +177,37 @@ export default function CatRoutes(app) {
   app.get("/api/cats/rarities/:rarity", getCatsByRarity);
   app.get("/api/cats/roll/:userId", rollCatForUser);
   app.get("/api/cats/rarities", getAllCatRarities);
+}
+
+async function getRarityDistributionFromUserId(userId) {
+  const ownershipList = await dao.findOwnershipListByUserId(userId);
+  const rarities = await dao.getCats();
+  const rarityDistribution = ownershipList.map((ownership) => {
+    const rarity = rarities.find((rarity) => rarity.breed === ownership.breed);
+    return { rarity: rarity.rarity };
+  });
+  return { ownershipList, rarityDistribution };
+}
+
+export async function updateUserAttributes(userId) {
+  const {ownershipList, rarityDistribution} = await getRarityDistributionFromUserId(userId);
+  const upgrades =
+    (await usersDao.findUpgradesByUserId(userId)).map(
+      (upgrade) => upgrade.upgrade
+    ) || [];
+  var { rollCost, coinsPerClick, critChance } = getAttributes(
+    rarityDistribution,
+    upgrades
+  );
+
+  // remove decimals
+  rollCost = Math.floor(rollCost);
+  coinsPerClick = Math.floor(coinsPerClick);
+
+  await usersDao.updateUserInfoByUserId(userId, {
+    rollCost,
+    coinsPerClick,
+    critChance,
+  });
+  return { ownershipList, upgrades, rollCost, coinsPerClick, critChance };
 }

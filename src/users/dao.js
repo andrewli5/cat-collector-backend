@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { UPGRADES } from "../constants.js";
 
 const userSchema = new mongoose.Schema(
   {
@@ -12,29 +13,19 @@ const userSchema = new mongoose.Schema(
       required: true,
     },
     coins: { type: Number, required: true },
+    rollCost: { type: Number, required: true },
+    coinsPerClick: { type: Number, required: true },
+    critChance: { type: Number, required: true },
   },
   { collection: "users" },
 );
 
 const upgradeSchema = new mongoose.Schema(
   {
-    user_id: { type: String, required: true },
+    userId: { type: String, required: true },
     upgrade: {
       type: String,
-      enum: [
-        "LUCK1",
-        "LUCK2",
-        "LUCK3",
-        "CRIT1",
-        "CRIT2",
-        "CRIT3",
-        "COIN1",
-        "COIN2",
-        "COIN3",
-        "COST1",
-        "COST2",
-        "COST3",
-      ],
+      enum: UPGRADES,
       required: true,
     }, // TODO: define upgrade enums
   },

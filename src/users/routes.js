@@ -6,8 +6,9 @@ import {
 } from "../constants.js";
 import * as dao from "./dao.js";
 import * as catsDao from "../cats/dao.js";
+import { updateUserAttributes } from "../cats/routes.js";
 
-export default function UserRoutes(app) {
+export function UserRoutes(app) {
   const updateCoinsByUserId = async (req, res) => {
     const { userId } = req.params;
     const { coins } = req.body;
@@ -101,18 +102,11 @@ export default function UserRoutes(app) {
       return;
     }
 
-    const ownershipList = await catsDao.findOwnershipListByUserId(userId);
-    var cats = ownershipList.map((ownership) => ownership.breed) || [];
-    if (cats.includes("all")) {
-      const allCats = await catsDao.getCats();
-      cats = allCats.map((cat) => cat.breed);
-    }
+    const { ownershipList, upgrades, rollCost, coinsPerClick, critChance } = await updateUserAttributes(userId);
 
+    const cats = ownershipList.map((ownership) => ownership.breed) || [];
     const favoriteList = await catsDao.findFavoriteListByUserId(userId);
     const favorites = favoriteList.map((favorite) => favorite.breed) || [];
-
-    const upgradesList = await dao.findUpgradesByUserId(userId);
-    const upgrades = upgradesList.map((upgrade) => upgrade.upgrade) || [];
 
     res.json({
       _id: user._id,
@@ -124,6 +118,9 @@ export default function UserRoutes(app) {
       cats,
       favorites,
       upgrades,
+      rollCost,
+      coinsPerClick,
+      critChance
     });
   };
 
