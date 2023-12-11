@@ -13,9 +13,9 @@ const userSchema = new mongoose.Schema(
       required: true,
     },
     coins: { type: Number, required: true },
-    rollCost: { type: Number, required: true },
-    coinsPerClick: { type: Number, required: true },
-    critChance: { type: Number, required: true },
+    rollCost: { type: Number, required: false },
+    coinsPerClick: { type: Number, required: false },
+    critChance: { type: Number, required: false },
   },
   { collection: "users" },
 );
