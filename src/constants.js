@@ -36,7 +36,7 @@ export const RARITY_TO_COIN_MULTIPLIER = {
 export const ROLL_DISCOUNTS = {
   COST1: 0.8,
   COST2: 0.6,
-  COST3: 0.25,
+  COST3: 0.2,
 };
 
 // crit rate for each crit upgrade, subject to change
@@ -174,8 +174,6 @@ export const STANDARD_CAT_VALUES = {
   E: [25000, 50000],
   L: [100000, 150000],
 };
-
-
 
 export {
   ADMIN,

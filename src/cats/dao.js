@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 
 const ownershipSchema = new mongoose.Schema(
   {
-    user_id: { type: String, required: true },
+    userId: { type: String, required: true },
     breed: { type: String, required: true },
   },
   { collection: "ownerships" },
@@ -10,7 +10,7 @@ const ownershipSchema = new mongoose.Schema(
 
 const favoritesSchema = new mongoose.Schema(
   {
-    user_id: { type: String, required: true },
+    userId: { type: String, required: true },
     breed: { type: String, required: true },
   },
   { collection: "favorites" },
@@ -33,23 +33,23 @@ const favoritesModel = mongoose.model("favorites", favoritesSchema);
 const raritiesModel = mongoose.model("rarities", raritySchema);
 
 export const findOwnershipListByUserId = (userId) => {
-  return ownershipsModel.find({ user_id: userId });
+  return ownershipsModel.find({ userId });
 };
 
 export const findFavoriteListByUserId = (userId) => {
-  return favoritesModel.find({ user_id: userId });
+  return favoritesModel.find({ userId });
 };
 
 export const createOwnership = (userId, breed) => {
-  return ownershipsModel.create({ user_id: userId, breed });
+  return ownershipsModel.create({ userId, breed });
 };
 
 export const createFavorite = (userId, breed) => {
-  return favoritesModel.create({ user_id: userId, breed });
+  return favoritesModel.create({ userId, breed });
 };
 
 export const removeFavorite = (userId, breed) => {
-  return favoritesModel.deleteOne({ user_id: userId, breed });
+  return favoritesModel.deleteOne({ userId, breed });
 };
 
 export const getCatsByRarity = (rarity) => {

@@ -1,4 +1,5 @@
 import {
+  COST_PER_UPGRADE,
   INCORRECT_ADMIN_PASSWORD_MSG,
   INVALID_CREDENTIALS_MSG,
   USER_NOT_FOUND_MSG,
@@ -124,6 +125,31 @@ export function UserRoutes(app) {
     });
   };
 
+  const purchaseUpgrade = async (req, res) => {
+    const { userId } = req.params;
+    const { upgrade } = req.body;
+
+    const user = await dao.findUserById(userId);
+    if (!user) {
+      res.status(404).json({ message: USER_NOT_FOUND_MSG });
+      return;
+    }
+
+    const { coins, upgrades } = await dao.findUserById(userId);
+    if (!upgrades || !upgrades.includes(upgrade)) {
+      const upgradeCost = COST_PER_UPGRADE[upgrade];
+      if (coins >= upgradeCost) {
+        await dao.updateCoinsByUserId(userId, coins - upgradeCost);
+        await dao.createUpgrade(userId, upgrade);
+        res.json({ userId, upgrade });
+      } else {
+        res.status(400).json({ message: "Insufficient funds." });
+      }
+    } else {
+      res.status(400).json({ message: "Upgrade already purchased." });
+    }
+  }
+
   app.get("/api/users", getAllUsers);
   app.get("/api/users/:username", getUserByUsername);
   app.get("/api/users/:userId/data", getUserData);
@@ -133,4 +159,5 @@ export function UserRoutes(app) {
   app.post("/api/users/signout", signOut);
   app.post("/api/users/signup/user", signUpAsUser);
   app.post("/api/users/signup/admin", signUpAsAdmin);
+  app.post("/api/users/:userId/upgrade", purchaseUpgrade);
 }

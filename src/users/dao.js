@@ -44,7 +44,7 @@ export const createAdmin = (user) =>
 export const findAllUsers = () => usersModel.find();
 
 export const findUserByUsername = (username) =>
-  usersModel.findOne({ username: username });
+  usersModel.findOne({ username });
 
 export const findUserByCredentials = (username, password) =>
   usersModel.findOne({ username, password });
@@ -59,7 +59,7 @@ export const updateCoinsByUserId = (userId, coins) =>
   usersModel.updateOne({ _id: userId }, { $set: { coins } });
 
 export const createUpgrade = (userId, upgrade) =>
-  upgradesModel.create({ user_id: userId, username: upgrade });
+  upgradesModel.create({ userId, upgrade });
 
 export const findUpgradesByUserId = (userId) =>
-  upgradesModel.find({ user_id: userId });
+  upgradesModel.find({ userId });
