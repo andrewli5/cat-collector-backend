@@ -4,9 +4,9 @@ import {
   LUCK2_ODDS,
   LUCK3_ODDS,
   RARITY_TO_COIN_MULTIPLIER,
-} from "../constants";
+} from "../constants.js";
 
-export const InfoRoutes = (app) => {
+export function InfoRoutes(app) {
   const getOdds = async (req, res) => {
     res.json({
       BASE: BASE_ODDS,
