@@ -5,6 +5,7 @@ import {
   STANDARD_CAT_VALUES,
   BASE_ODDS,
   USER_NOT_FOUND_MSG,
+  NOT_ENOUGH_COINS_MSG,
   getAttributes,
 } from "../constants.js";
 
