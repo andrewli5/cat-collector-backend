@@ -4,6 +4,9 @@ import {
   RARITIES,
   STANDARD_CAT_VALUES,
   BASE_ODDS,
+  LUCK1_ODDS,
+  LUCK2_ODDS,
+  LUCK3_ODDS,
   USER_NOT_FOUND_MSG,
   NOT_ENOUGH_COINS_MSG,
   getAttributes,
@@ -99,15 +102,15 @@ export function CatRoutes(app) {
   };
 
   // helper for rolling, picks a random rarity based on odds
-  const pickRarity = () => {
-    const totalOdds = Object.values(BASE_ODDS).reduce(
-      (total, odds) => total + odds,
+  const pickRarity = (odds) => {
+    const totalOdds = Object.values(odds).reduce(
+      (total, prob) => total + prob,
       0
     );
     const rand = Math.random() * totalOdds;
     let cumulativeProbability = 0;
     for (const rarity of RARITIES) {
-      cumulativeProbability += BASE_ODDS[rarity];
+      cumulativeProbability += odds[rarity];
       if (rand <= cumulativeProbability) {
         return rarity;
       }
@@ -118,17 +121,23 @@ export function CatRoutes(app) {
   const rollCatForUser = async (req, res) => {
     const { userId } = req.params;
     const user = await usersDao.findUserById(userId);
-    if (!user) {
-      res.status(404).json({ message: NOT_ENOUGH_COINS_MSG });
-      return;
-    }
     if (user.coins < user.rollCost) {
       res.status(400).json({ message: NOT_ENOUGH_COINS_MSG });
       return;
     }
 
+    var odds = BASE_ODDS;
+    const upgrades = await usersDao.findUpgradesByUserId(userId);
+    if (upgrades.includes("LUCK3")) {
+      odds = LUCK3_ODDS;
+    } else if (upgrades.includes("LUCK2")) {
+      odds = LUCK2_ODDS;
+    } else if (upgrades.includes("LUCK1")) {
+      odds = LUCK1_ODDS;
+    }
+
     // start roll
-    const rarity = pickRarity();
+    const rarity = pickRarity(odds);
     const catList = await dao.getCatsByRarity(rarity);
     const breed = pickBreed(catList);
 
