@@ -151,8 +151,8 @@ export function CatRoutes(app) {
     // if not duplicate, add cat to user's ownerships, update user's stats, and return new stats
     else {
       await dao.createOwnership(userId, breed);
-
       await usersDao.updateCoinsByUserId(userId, user.coins - user.rollCost);
+      const { rollCost, coinsPerClick, critChance } = await updateUserAttributes(userId);
       res.json({
         breed,
         rarity,
