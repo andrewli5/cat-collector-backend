@@ -136,7 +136,7 @@ export const BASE_ODDS = {
   R: 0.04,
   E: 0.009,
   L: 0.001,
-  M: 0.0,
+  M: 8.0,
 };
 
 export const LUCK1_ODDS = {
@@ -145,7 +145,7 @@ export const LUCK1_ODDS = {
   R: 0.1,
   E: 0.045,
   L: 0.005,
-  M: 0.0,
+  M: 8.0,
 };
 
 export const LUCK2_ODDS = {
@@ -154,7 +154,7 @@ export const LUCK2_ODDS = {
   R: 0.15,
   E: 0.1,
   L: 0.01,
-  M: 0.0,
+  M: 8.0,
 };
 
 export const LUCK3_ODDS = {
