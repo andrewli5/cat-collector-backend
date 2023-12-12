@@ -48,7 +48,7 @@ export const CRIT_RATES = {
 
 // cost per roll and multiplier for cost per new roll
 export const BASE_COST_PER_ROLL = 100.0;
-export const ROLL_COST_GROWTH_RATE = 1.1;
+export const ROLL_COST_GROWTH_RATE = 1.3;
 
 // base coins per click. each new cat acquired increases coins per click by a multiplier determined by the cat's rarity
 export const BASE_COINS_PER_CLICK = 50.0;
@@ -170,8 +170,8 @@ export const LUCK3_ODDS = {
 export const STANDARD_CAT_VALUES = {
   C: [150, 250],
   U: [500, 750],
-  R: [1500, 2500],
-  E: [25000, 50000],
+  R: [1000, 2000],
+  E: [10000, 20000],
   L: [100000, 150000],
 };
 
