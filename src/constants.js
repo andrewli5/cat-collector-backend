@@ -14,9 +14,9 @@ export const UPGRADES = [
   "LUCK1", // 60% chance of common, 25% chance of uncommon, 10% chance of rare, 4.5% chance of epic, 0.5% chance of legendary
   "LUCK2", // 40% chance of common, 30% chance of uncommon, 15% chance of rare, 10% chance of epic, 1% chance of legendary
   "LUCK3", // 20% chance of common, 40% chance of uncommon, 20% chance of rare, 15% chance of epic, 5% chance of legendary
-  "CRIT1", // 5% chance of 2x coins
-  "CRIT2", // 10% chance of 2x coins
-  "CRIT3", // 20% chance of 2x coins
+  "CRIT1", // 1% chance of 28.5x coins on click
+  "CRIT2", // 2% chance of 28.5x coins
+  "CRIT3", // 4% chance of 28.5x coins
   "COST1", // Reduce cost of all future rolls by 25%
   "COST2", // Reduce cost of all future rolls by 50%
   "COST3", // Reduce cost of all future rolls by 75%
@@ -41,9 +41,9 @@ export const ROLL_DISCOUNTS = {
 
 // crit rate for each crit upgrade, subject to change
 export const CRIT_RATES = {
-  CRIT1: 0.05,
-  CRIT2: 0.1,
-  CRIT3: 0.2,
+  CRIT1: 0.01,
+  CRIT2: 0.02,
+  CRIT3: 0.04,
 };
 
 // cost per roll and multiplier for cost per new roll

@@ -27,12 +27,7 @@ export function CatRoutes(app) {
     }
 
     const favoritedBreeds = await getFavoritedBreedsByUserId(userId);
-    if (favoritedBreeds.includes("all")) {
-      const allBreeds = await getBreeds();
-      res.json(allBreeds);
-    } else {
-      res.json(favoritedBreeds);
-    }
+    res.json(favoritedBreeds);
   };
 
   const addUserFavorites = async (req, res) => {
@@ -81,12 +76,7 @@ export function CatRoutes(app) {
     }
 
     const ownedBreeds = await getOwnedBreedsByUserId(userId);
-    if (ownedBreeds.includes("all")) {
-      const allBreeds = await getBreeds();
-      res.json(allBreeds);
-    } else {
-      res.json(ownedBreeds);
-    }
+    res.json(ownedBreeds);
   };
 
   const getCatsByRarity = async (req, res) => {
