@@ -57,11 +57,6 @@ export function CatRoutes(app) {
     res.json({ userId, favorite });
   };
 
-  const getBreeds = async () => {
-    const catList = await dao.getCats();
-    return catList.map((cat) => cat.breed);
-  };
-
   const getOwnedBreedsByUserId = async (userId) => {
     const ownershipList = await dao.findOwnershipListByUserId(userId);
     return ownershipList.map((ownership) => ownership.breed) || [];
@@ -137,9 +132,7 @@ export function CatRoutes(app) {
     // if duplicate, add coins and return
     if (ownedBreeds.includes(breed)) {
       const coinsWorth = Math.floor(
-        Math.random() *
-          (STANDARD_CAT_VALUES[rarity][1] - STANDARD_CAT_VALUES[rarity][0]) +
-          STANDARD_CAT_VALUES[rarity][0],
+        STANDARD_CAT_VALUES[rarity] * user.rollCost,
       );
       await usersDao.updateCoinsByUserId(
         userId,

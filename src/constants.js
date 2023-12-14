@@ -168,11 +168,11 @@ export const LUCK3_ODDS = {
 
 // range of what each category of cat is worth
 export const STANDARD_CAT_VALUES = {
-  C: [150, 250],
-  U: [500, 750],
-  R: [1000, 2000],
-  E: [10000, 20000],
-  L: [100000, 150000],
+  C: 0.2,
+  U: 0.4,
+  R: 0.8,
+  E: 1.5,
+  L: 2.5,
 };
 
 export {
