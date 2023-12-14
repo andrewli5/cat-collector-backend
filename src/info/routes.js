@@ -22,4 +22,4 @@ export function InfoRoutes(app) {
 
   app.get("/api/info/odds", getOdds);
   app.get("/api/info/multipliers", getMultipliers);
-};
+}

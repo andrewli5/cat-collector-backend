@@ -29,7 +29,7 @@ const upgradeSchema = new mongoose.Schema(
       required: true,
     }, // TODO: define upgrade enums
   },
-  { collection: "upgrades" }
+  { collection: "upgrades" },
 );
 
 const usersModel = mongoose.model("users", userSchema);
@@ -49,8 +49,7 @@ export const findUserByUsername = (username) =>
 export const findUserByCredentials = (username, password) =>
   usersModel.findOne({ username, password });
 
-export const findUserById = (id) =>
-  usersModel.findOne({ _id: id });
+export const findUserById = (id) => usersModel.findOne({ _id: id });
 
 export const updateUserInfoByUserId = (userId, userInfo) =>
   usersModel.updateOne({ _id: userId }, { $set: userInfo });
@@ -61,5 +60,4 @@ export const updateCoinsByUserId = (userId, coins) =>
 export const createUpgrade = (userId, upgrade) =>
   upgradesModel.create({ userId, upgrade });
 
-export const findUpgradesByUserId = (userId) =>
-  upgradesModel.find({ userId });
+export const findUpgradesByUserId = (userId) => upgradesModel.find({ userId });

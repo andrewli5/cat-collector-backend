@@ -54,7 +54,7 @@ export const ROLL_COST_GROWTH_RATE = 1.3;
 export const BASE_COINS_PER_CLICK = 50.0;
 
 // base crit chance is 5%, which is the chance for a click to deliver 2x coins
-export const BASE_CRIT_CHANCE = 0.025;
+export const BASE_CRIT_CHANCE = 0.005;
 
 // Get a user's roll cost, coins per click, and crit chance based on their cats and upgrades
 // cats are given in the format [{breed: "cat1", rarity: "C"}, {breed: "cat2", rarity: "U"}, ...]

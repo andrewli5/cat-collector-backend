@@ -103,7 +103,8 @@ export function UserRoutes(app) {
       return;
     }
 
-    const { ownershipList, upgrades, rollCost, coinsPerClick, critChance } = await updateUserAttributes(userId);
+    const { ownershipList, upgrades, rollCost, coinsPerClick, critChance } =
+      await updateUserAttributes(userId);
 
     const cats = ownershipList.map((ownership) => ownership.breed) || [];
     const favoriteList = await catsDao.findFavoriteListByUserId(userId);
@@ -121,7 +122,7 @@ export function UserRoutes(app) {
       upgrades,
       rollCost,
       coinsPerClick,
-      critChance
+      critChance,
     });
   };
 
@@ -148,7 +149,7 @@ export function UserRoutes(app) {
     } else {
       res.status(400).json({ message: "Upgrade already purchased." });
     }
-  }
+  };
 
   app.get("/api/users", getAllUsers);
   app.get("/api/users/:username", getUserByUsername);
