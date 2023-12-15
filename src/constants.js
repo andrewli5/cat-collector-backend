@@ -163,7 +163,7 @@ export const LUCK3_ODDS = {
   R: 0.2,
   E: 0.15,
   L: 0.05,
-  M: 0.01,
+  M: 15.0,
 };
 
 // range of what each category of cat is worth
