@@ -173,6 +173,7 @@ export const STANDARD_CAT_VALUES = {
   R: 0.8,
   E: 1.5,
   L: 2.5,
+  M: 5.0,
 };
 
 export {
