@@ -113,11 +113,11 @@ export function CatRoutes(app) {
 
     var odds = BASE_ODDS;
     const upgrades = await usersDao.findUpgradesByUserId(userId);
-    if (upgrades.includes("LUCK3")) {
+    if (upgrades.find((upgrade) => upgrade.upgrade === "LUCK3")) {
       odds = LUCK3_ODDS;
-    } else if (upgrades.includes("LUCK2")) {
+    } else if (upgrades.find((upgrade) => upgrade.upgrade === "LUCK2")) {
       odds = LUCK2_ODDS;
-    } else if (upgrades.includes("LUCK1")) {
+    } else if (upgrades.find((upgrade) => upgrade.upgrade === "LUCK1")) {
       odds = LUCK1_ODDS;
     }
 
