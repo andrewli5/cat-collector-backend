@@ -6,6 +6,7 @@ import "dotenv/config";
 import { CatRoutes } from "./cats/routes.js";
 import { UserRoutes } from "./users/routes.js";
 import { InfoRoutes } from "./info/routes.js";
+import MongoStore from "connect-mongo";
 
 const CONNECTION_STRING = process.env.DB_CONNECTION_STRING;
 mongoose.connect(CONNECTION_STRING);
@@ -14,12 +15,12 @@ const sessionOptions = {
   secret: "any string",
   resave: false,
   saveUninitialized: false,
-};
+  store: MongoStore.create({ mongoUrl: CONNECTION_STRING })
+}
 
 if (process.env.NODE_ENV !== "development") {
   sessionOptions.proxy = true;
   sessionOptions.cookie = {
-    sameSite: "none",
     secure: true,
   };
 }
@@ -32,6 +33,7 @@ app.use(
     credentials: true,
   }),
 );
+
 app.use(session(sessionOptions));
 app.use(express.json());
 UserRoutes(app);
