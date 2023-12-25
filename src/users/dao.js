@@ -7,6 +7,7 @@ const userSchema = new mongoose.Schema(
     password: { type: String, required: true },
     firstName: String,
     lastName: String,
+    profilePicture: String,
     role: {
       type: String,
       enum: ["ADMIN", "USER"],
@@ -17,7 +18,7 @@ const userSchema = new mongoose.Schema(
     coinsPerClick: { type: Number, required: false },
     critChance: { type: Number, required: false },
   },
-  { collection: "users" },
+  { collection: "users" }
 );
 
 const upgradeSchema = new mongoose.Schema(
@@ -29,7 +30,7 @@ const upgradeSchema = new mongoose.Schema(
       required: true,
     }, // TODO: define upgrade enums
   },
-  { collection: "upgrades" },
+  { collection: "upgrades" }
 );
 
 const usersModel = mongoose.model("users", userSchema);

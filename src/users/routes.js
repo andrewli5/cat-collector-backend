@@ -82,12 +82,14 @@ export function UserRoutes(app) {
   // admin tools only
   const updateUserInfoByUserId = async (req, res) => {
     const { userId } = req.params;
-    const { username, firstName, lastName, role, coins } = req.body;
+    const { username, firstName, lastName, profilePicture, role, coins } =
+      req.body;
 
     const status = await dao.updateUserInfoByUserId(userId, {
       username,
       firstName,
       lastName,
+      profilePicture,
       role,
       coins,
     });
