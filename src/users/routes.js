@@ -119,6 +119,7 @@ export function UserRoutes(app) {
       lastName: user.lastName,
       role: user.role,
       coins: user.coins,
+      profilePicture: user.profilePicture,
       cats,
       favorites,
       upgrades,
