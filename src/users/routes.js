@@ -85,16 +85,29 @@ export function UserRoutes(app) {
     const { username, firstName, lastName, profilePicture, role, coins } =
       req.body;
 
-    const status = await dao.updateUserInfoByUserId(userId, {
-      username,
-      firstName,
-      lastName,
-      profilePicture,
-      role,
-      coins,
-    });
+    // verify firstName and lastName are valid
+    if (firstName.length === 0) {
+      res.status(400).json({ message: "First name is a required field." });
+      return;
+    }
+    if (lastName.length === 0) {
+      res.status(400).json({ message: "Last name is a required field." });
+      return;
+    }
 
-    res.json(status);
+    try {
+      const status = await dao.updateUserInfoByUserId(userId, {
+        username,
+        firstName,
+        lastName,
+        profilePicture,
+        role,
+        coins,
+      });
+      res.json(status);
+    } catch (err) {
+      res.status(400).json({ message: err.message });
+    }
   };
 
   const getUserData = async (req, res) => {
