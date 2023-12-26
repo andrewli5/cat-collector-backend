@@ -86,12 +86,16 @@ export function UserRoutes(app) {
       req.body;
 
     // verify firstName and lastName are valid
+    if (username.length === 0) {
+      res.status(400).json({ message: "username empty" });
+      return;
+    }
     if (firstName.length === 0) {
-      res.status(400).json({ message: "First name is a required field." });
+      res.status(400).json({ message: "first name empty" });
       return;
     }
     if (lastName.length === 0) {
-      res.status(400).json({ message: "Last name is a required field." });
+      res.status(400).json({ message: "last name empty" });
       return;
     }
 
