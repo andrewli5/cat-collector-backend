@@ -98,7 +98,7 @@ export function UserRoutes(app) {
       res.status(400).json({ message: "last name empty" });
       return;
     }
-    if (!coins && coins !== 0) {
+    if (coins === null && coins !== 0) {
       res.status(400).json({ message: "coins empty" });
       return;
     }
