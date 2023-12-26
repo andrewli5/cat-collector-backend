@@ -85,7 +85,7 @@ export function UserRoutes(app) {
     const { username, firstName, lastName, profilePicture, role, coins } =
       req.body;
 
-    // verify firstName and lastName are valid
+    // verify username, firstName, lastName, and coins are valid
     if (username.length === 0) {
       res.status(400).json({ message: "username empty" });
       return;
@@ -96,6 +96,10 @@ export function UserRoutes(app) {
     }
     if (lastName.length === 0) {
       res.status(400).json({ message: "last name empty" });
+      return;
+    }
+    if (!coins || coins < 0) {
+      res.status(400).json({ message: "invalid coins" });
       return;
     }
 
