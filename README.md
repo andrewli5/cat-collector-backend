@@ -1,1 +1,1 @@
-# cs4550-fp-node
+Node backend for cat collector :)
