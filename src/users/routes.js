@@ -1,6 +1,5 @@
 import {
   COST_PER_UPGRADE,
-  INCORRECT_ADMIN_PASSWORD_MSG,
   INVALID_CREDENTIALS_MSG,
   USER_NOT_FOUND_MSG,
   USERNAME_TAKEN_MSG,
@@ -44,25 +43,6 @@ export function UserRoutes(app) {
     res.json(newUser);
   };
 
-  // admin-only
-  const signUpAsAdmin = async (req, res) => {
-    const existingUser = await dao.findUserByUsername(req.body.username);
-    if (existingUser) {
-      res.status(400).json({ message: USERNAME_TAKEN_MSG });
-      return;
-    }
-
-    const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
-    if (req.body.admin_password !== ADMIN_PASSWORD) {
-      res.status(401).json({ message: INCORRECT_ADMIN_PASSWORD_MSG });
-      return;
-    }
-
-    const newUser = await dao.createAdmin(req.body);
-    req.session["currentUser"] = newUser;
-    res.json(newUser);
-  };
-
   const getUserByUsername = async (req, res) => {
     const { username } = req.params;
     const user = await dao.findUserByUsername(username);
@@ -73,7 +53,7 @@ export function UserRoutes(app) {
     res.json(user);
   };
 
-  // admin tools only only
+  // admin tools only
   const getAllUsers = async (req, res) => {
     const users = await dao.findAllUsers();
     res.json(users);
@@ -187,6 +167,5 @@ export function UserRoutes(app) {
   app.post("/api/users/signin", signIn);
   app.post("/api/users/signout", signOut);
   app.post("/api/users/signup/user", signUpAsUser);
-  app.post("/api/users/signup/admin", signUpAsAdmin);
   app.post("/api/users/:userId/upgrade", purchaseUpgrade);
 }

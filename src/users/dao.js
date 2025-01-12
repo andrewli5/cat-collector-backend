@@ -39,9 +39,6 @@ const upgradesModel = mongoose.model("upgrades", upgradeSchema);
 export const createUser = (user) =>
   usersModel.create({ ...user, role: "USER", coins: 500 });
 
-export const createAdmin = (user) =>
-  usersModel.create({ ...user, role: "ADMIN", coins: 9999999 });
-
 export const findAllUsers = () => usersModel.find();
 
 export const findUserByUsername = (username) =>

@@ -3,7 +3,6 @@ const USER = "USER";
 const UNAUTHORIZED_MSG = "Unauthorized.";
 const INVALID_REQUEST_SENDER_MSG = "Invalid request sender.";
 const USER_NOT_FOUND_MSG = "User not found.";
-const INCORRECT_ADMIN_PASSWORD_MSG = "Incorrect admin password.";
 const INVALID_CREDENTIALS_MSG = "Invalid credentials.";
 const USERNAME_TAKEN_MSG = "Username taken.";
 const NOT_ENOUGH_COINS_MSG = "Not enough coins to roll.";
@@ -182,7 +181,6 @@ export {
   UNAUTHORIZED_MSG,
   INVALID_REQUEST_SENDER_MSG,
   USER_NOT_FOUND_MSG,
-  INCORRECT_ADMIN_PASSWORD_MSG,
   INVALID_CREDENTIALS_MSG,
   USERNAME_TAKEN_MSG,
   NOT_ENOUGH_COINS_MSG,
