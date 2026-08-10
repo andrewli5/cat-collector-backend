@@ -1,42 +1,47 @@
-import express from "express";
-import cors from "cors";
-import mongoose from "mongoose";
-import session from "express-session";
-import "dotenv/config";
-import { CatRoutes } from "./cats/routes.js";
-import { UserRoutes } from "./users/routes.js";
-import { InfoRoutes } from "./info/routes.js";
 import MongoStore from "connect-mongo";
+import cors from "cors";
+import express from "express";
+import session from "express-session";
+import helmet from "helmet";
+import { catalogRouter, userCatsRouter } from "./cats/routes.js";
+import { config } from "./config.js";
+import { errorHandler, notFound } from "./http.js";
+import { infoRouter } from "./info/routes.js";
+import { usersRouter } from "./users/routes.js";
 
-const CONNECTION_STRING = process.env.DB_CONNECTION_STRING;
-mongoose.connect(CONNECTION_STRING);
+export function createApp() {
+  const app = express();
 
-const sessionOptions = {
-  secret: "any string",
-  resave: false,
-  saveUninitialized: false,
-  store: MongoStore.create({ mongoUrl: CONNECTION_STRING })
+  if (config.isProduction) app.set("trust proxy", 1);
+  app.disable("x-powered-by");
+
+  app.use(helmet());
+  app.use(cors({ origin: config.corsOrigins, credentials: true }));
+  app.use(express.json({ limit: "16kb" }));
+  app.use(
+    session({
+      secret: config.sessionSecret,
+      resave: false,
+      saveUninitialized: false,
+      proxy: config.isProduction,
+      store: MongoStore.create({ mongoUrl: config.mongoUri }),
+      cookie: {
+        httpOnly: true,
+        secure: config.isProduction,
+        sameSite: config.isProduction ? "none" : "lax",
+        maxAge: config.sessionTtlMs,
+      },
+    }),
+  );
+
+  app.get("/health", (req, res) => res.json({ status: "ok" }));
+  app.use("/api/users", usersRouter);
+  app.use("/api/users", userCatsRouter);
+  app.use("/api/cats", catalogRouter);
+  app.use("/api/info", infoRouter);
+
+  app.use(notFound);
+  app.use(errorHandler);
+
+  return app;
 }
-
-if (process.env.NODE_ENV !== "development") {
-  sessionOptions.proxy = true;
-  sessionOptions.cookie = {
-    secure: true,
-  };
-}
-
-const app = express();
-
-app.use(
-  cors({
-    origin: [process.env.FRONTEND_URL_DEV, process.env.FRONTEND_URL_PROD],
-    credentials: true,
-  }),
-);
-
-app.use(session(sessionOptions));
-app.use(express.json());
-UserRoutes(app);
-CatRoutes(app);
-InfoRoutes(app);
-app.listen(process.env.PORT || 4000);
