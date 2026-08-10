@@ -1,61 +1,52 @@
 import mongoose from "mongoose";
+import { RARITIES } from "../game/enums.js";
 
-const ownershipSchema = new mongoose.Schema(
-  {
-    userId: { type: String, required: true },
-    breed: { type: String, required: true },
-  },
-  { collection: "ownerships" },
-);
-
-const favoritesSchema = new mongoose.Schema(
-  {
-    userId: { type: String, required: true },
-    breed: { type: String, required: true },
-  },
-  { collection: "favorites" },
-);
+const userBreedSchema = (collection) => {
+  const schema = new mongoose.Schema(
+    {
+      userId: { type: String, required: true },
+      breed: { type: String, required: true },
+    },
+    { collection },
+  );
+  schema.index({ userId: 1, breed: 1 }, { unique: true });
+  return schema;
+};
 
 const raritySchema = new mongoose.Schema(
   {
-    breed: { type: String, required: true },
-    rarity: {
-      type: String,
-      enum: ["C", "U", "R", "E", "L", "M"],
-      required: true,
-    },
+    breed: { type: String, required: true, unique: true },
+    rarity: { type: String, enum: RARITIES, required: true },
   },
   { collection: "rarities" },
 );
 
-const ownershipsModel = mongoose.model("ownerships", ownershipSchema);
-const favoritesModel = mongoose.model("favorites", favoritesSchema);
+raritySchema.index({ rarity: 1 });
+
+const ownershipsModel = mongoose.model(
+  "ownerships",
+  userBreedSchema("ownerships"),
+);
+const favoritesModel = mongoose.model(
+  "favorites",
+  userBreedSchema("favorites"),
+);
 const raritiesModel = mongoose.model("rarities", raritySchema);
 
-export const findOwnershipListByUserId = (userId) => {
-  return ownershipsModel.find({ userId });
-};
+export const findOwnedBreeds = (userId) =>
+  ownershipsModel.distinct("breed", { userId }).exec();
 
-export const findFavoriteListByUserId = (userId) => {
-  return favoritesModel.find({ userId });
-};
+export const findFavoriteBreeds = (userId) =>
+  favoritesModel.distinct("breed", { userId }).exec();
 
-export const createOwnership = (userId, breed) => {
-  return ownershipsModel.create({ userId, breed });
-};
+export const createOwnership = (userId, breed) =>
+  ownershipsModel.create({ userId, breed });
 
-export const createFavorite = (userId, breed) => {
-  return favoritesModel.create({ userId, breed });
-};
+export const createFavorite = (userId, breed) =>
+  favoritesModel.create({ userId, breed });
 
-export const removeFavorite = (userId, breed) => {
-  return favoritesModel.deleteOne({ userId, breed });
-};
+export const removeFavorite = (userId, breed) =>
+  favoritesModel.deleteOne({ userId, breed }).exec();
 
-export const getCatsByRarity = (rarity) => {
-  return raritiesModel.find({ rarity });
-};
-
-export const getCats = () => {
-  return raritiesModel.find();
-};
+export const findAllCats = () =>
+  raritiesModel.find({}, "breed rarity -_id").lean().exec();
