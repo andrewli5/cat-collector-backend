@@ -1,23 +1,39 @@
 {
   "type": "module",
-  "name": "cs4550-fp-node",
+  "name": "cat-collector-backend",
   "version": "1.0.0",
-  "description": "",
-  "main": "src/app.js",
+  "description": "Express + MongoDB API for the Cat Collector gacha clicker game",
+  "main": "src/server.js",
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
-    "start": "nodemon",
-    "format": "prettier --write \"src/**/*.{js,jsx}\""
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "check": "node src/game/stats.check.js",
+    "lint": "eslint .",
+    "format": "prettier --write \"src/**/*.js\"",
+    "format:check": "prettier --check \"src/**/*.js\""
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "bcrypt": "^6.0.0",
     "connect-mongo": "^5.1.0",
-    "cors": "^2.8.5",
-    "dotenv": "^16.3.1",
-    "express": "^4.18.2",
-    "express-session": "^1.17.3",
-    "mongodb": "^6.3.0",
-    "mongoose": "^8.0.2",
-    "nodemon": "^3.0.2"
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "express-rate-limit": "^8.6.1",
+    "express-session": "^1.18.2",
+    "helmet": "^8.3.0",
+    "mongoose": "^8.24.2",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.8.0",
+    "eslint-config-prettier": "^10.1.8",
+    "globals": "^17.9.0",
+    "prettier": "^3.9.6"
   }
 }

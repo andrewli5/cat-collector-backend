@@ -1,171 +1,146 @@
+import express from "express";
+import { z } from "zod";
+import { MAX_CLICKS_PER_REQUEST, UPGRADE_IDS } from "../game/balance.js";
+import { ROLES } from "../game/enums.js";
 import {
-  COST_PER_UPGRADE,
-  INVALID_CREDENTIALS_MSG,
-  USER_NOT_FOUND_MSG,
-  USERNAME_TAKEN_MSG,
-} from "../constants.js";
-import * as dao from "./dao.js";
-import * as catsDao from "../cats/dao.js";
-import { updateUserAttributes } from "../cats/routes.js";
+  authLimiter,
+  clickLimiter,
+  requireAdmin,
+  requireAuth,
+  requireSelfOrAdmin,
+  userIdParams,
+  validate,
+} from "../http.js";
+import * as service from "./service.js";
 
-export function UserRoutes(app) {
-  const updateCoinsByUserId = async (req, res) => {
-    const { userId } = req.params;
-    const { coins } = req.body;
-    const status = await dao.updateCoinsByUserId(userId, coins);
-    res.json(status);
-  };
+const username = z
+  .string()
+  .trim()
+  .min(3)
+  .max(32)
+  .regex(/^[\w.-]+$/, "letters, digits, dot, dash and underscore only");
+const name = z.string().trim().max(64);
 
-  const signIn = async (req, res) => {
-    const { username, password } = req.body;
-    const currentUser = await dao.findUserByCredentials(username, password);
-    if (!currentUser) {
-      res.status(401).json({ message: INVALID_CREDENTIALS_MSG });
-      return;
-    }
-    req.session["currentUser"] = currentUser;
-    res.json(currentUser);
-  };
+const signUpBody = z.object({
+  username,
+  password: z.string().min(8).max(128),
+  firstName: name.optional(),
+  lastName: name.optional(),
+  profilePicture: z.string().trim().max(512).optional(),
+});
 
-  const signOut = (req, res) => {
-    req.session.destroy();
-    res.sendStatus(200);
-  };
+const signInBody = z.object({
+  username: z.string().max(128),
+  password: z.string().max(128),
+});
 
-  const signUpAsUser = async (req, res) => {
-    const existingUser = await dao.findUserByUsername(req.body.username);
-    if (existingUser) {
-      res.status(400).json({ message: USERNAME_TAKEN_MSG });
-      return;
-    }
-    const newUser = await dao.createUser(req.body);
-    req.session["currentUser"] = newUser;
-    res.json(newUser);
-  };
+const updateUserBody = z
+  .object({
+    username,
+    firstName: name,
+    lastName: name,
+    profilePicture: z.string().trim().max(512),
+    role: z.enum(ROLES),
+    coins: z.int().min(0),
+  })
+  .partial()
+  .refine((body) => Object.keys(body).length > 0, "no fields to update");
 
-  const getUserByUsername = async (req, res) => {
-    const { username } = req.params;
-    const user = await dao.findUserByUsername(username);
-    if (!user) {
-      res.status(404).json({ message: USER_NOT_FOUND_MSG });
-      return;
-    }
-    res.json(user);
-  };
+const clicksBody = z.object({
+  clicks: z.int().min(1).max(MAX_CLICKS_PER_REQUEST),
+});
 
-  // admin tools only
-  const getAllUsers = async (req, res) => {
-    const users = await dao.findAllUsers();
-    res.json(users);
-  };
+const upgradeBody = z.object({ upgrade: z.enum(UPGRADE_IDS) });
 
-  // admin tools only
-  const updateUserInfoByUserId = async (req, res) => {
-    const { userId } = req.params;
-    const { username, firstName, lastName, profilePicture, role, coins } =
-      req.body;
-
-    // verify username, firstName, lastName, and coins are valid
-    if (username.length === 0) {
-      res.status(400).json({ message: "username empty" });
-      return;
-    }
-    if (firstName.length === 0) {
-      res.status(400).json({ message: "first name empty" });
-      return;
-    }
-    if (lastName.length === 0) {
-      res.status(400).json({ message: "last name empty" });
-      return;
-    }
-    if (coins === null && coins !== 0) {
-      res.status(400).json({ message: "coins empty" });
-      return;
-    }
-    if (coins <= 0) {
-      res.status(400).json({ message: "coins invalid" });
-      return;
-    }
-
-    try {
-      const status = await dao.updateUserInfoByUserId(userId, {
-        username,
-        firstName,
-        lastName,
-        profilePicture,
-        role,
-        coins,
-      });
-      res.json(status);
-    } catch (err) {
-      res.status(400).json({ message: err.message });
-    }
-  };
-
-  const getUserData = async (req, res) => {
-    const { userId } = req.params;
-    const user = await dao.findUserById(userId);
-    if (!user) {
-      res.status(404).json({ message: USER_NOT_FOUND_MSG });
-      return;
-    }
-
-    const { ownershipList, upgrades, rollCost, coinsPerClick, critChance } =
-      await updateUserAttributes(userId);
-
-    const cats = ownershipList.map((ownership) => ownership.breed) || [];
-    const favoriteList = await catsDao.findFavoriteListByUserId(userId);
-    const favorites = favoriteList.map((favorite) => favorite.breed) || [];
-
-    res.json({
-      _id: user._id,
-      username: user.username,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      role: user.role,
-      coins: user.coins,
-      profilePicture: user.profilePicture,
-      cats,
-      favorites,
-      upgrades,
-      rollCost,
-      coinsPerClick,
-      critChance,
+const startSession = (req, user) =>
+  new Promise((resolve, reject) => {
+    req.session.regenerate((err) => {
+      if (err) return reject(err);
+      req.session.userId = String(user._id);
+      req.session.save((saveErr) => (saveErr ? reject(saveErr) : resolve()));
     });
-  };
+  });
 
-  const purchaseUpgrade = async (req, res) => {
-    const { userId } = req.params;
-    const { upgrade } = req.body;
+export const usersRouter = express.Router();
 
-    const user = await dao.findUserById(userId);
-    if (!user) {
-      res.status(404).json({ message: USER_NOT_FOUND_MSG });
-      return;
-    }
+usersRouter.post(
+  "/signup",
+  authLimiter,
+  validate({ body: signUpBody }),
+  async (req, res) => {
+    const user = await service.signUp(req.body);
+    await startSession(req, user);
+    res.status(201).json(user);
+  },
+);
 
-    const { coins, upgrades } = await dao.findUserById(userId);
-    if (!upgrades || !upgrades.includes(upgrade)) {
-      const upgradeCost = COST_PER_UPGRADE[upgrade];
-      if (coins >= upgradeCost) {
-        await dao.updateCoinsByUserId(userId, coins - upgradeCost);
-        await dao.createUpgrade(userId, upgrade);
-        res.json({ userId, upgrade });
-      } else {
-        res.status(400).json({ message: "Insufficient funds." });
-      }
-    } else {
-      res.status(400).json({ message: "Upgrade already purchased." });
-    }
-  };
+usersRouter.post(
+  "/signin",
+  authLimiter,
+  validate({ body: signInBody }),
+  async (req, res) => {
+    const user = await service.signIn(req.body.username, req.body.password);
+    await startSession(req, user);
+    res.json(user);
+  },
+);
 
-  app.get("/api/users", getAllUsers);
-  app.get("/api/users/:username", getUserByUsername);
-  app.get("/api/users/:userId/data", getUserData);
-  app.put("/api/users/:userId/coins", updateCoinsByUserId);
-  app.put("/api/users/:userId", updateUserInfoByUserId);
-  app.post("/api/users/signin", signIn);
-  app.post("/api/users/signout", signOut);
-  app.post("/api/users/signup/user", signUpAsUser);
-  app.post("/api/users/:userId/upgrade", purchaseUpgrade);
-}
+usersRouter.post("/signout", (req, res, next) =>
+  req.session.destroy((err) => {
+    if (err) return next(err);
+    res.clearCookie("connect.sid");
+    res.sendStatus(204);
+  }),
+);
+
+usersRouter.get("/", requireAuth, requireAdmin, async (req, res) =>
+  res.json(await service.listUsers()),
+);
+
+usersRouter.get("/me", requireAuth, (req, res) => res.json(req.user));
+
+usersRouter.get(
+  "/by-username/:username",
+  requireAuth,
+  validate({ params: z.object({ username: z.string().max(128) }) }),
+  async (req, res) =>
+    res.json(await service.getUserByUsername(req.params.username)),
+);
+
+usersRouter.get(
+  "/:userId/data",
+  validate({ params: userIdParams }),
+  requireAuth,
+  requireSelfOrAdmin,
+  async (req, res) => res.json(await service.getUserData(req.params.userId)),
+);
+
+usersRouter.put(
+  "/:userId",
+  validate({ params: userIdParams, body: updateUserBody }),
+  requireAuth,
+  requireAdmin,
+  async (req, res) =>
+    res.json(await service.updateUser(req.params.userId, req.body)),
+);
+
+usersRouter.post(
+  "/:userId/clicks",
+  validate({ params: userIdParams, body: clicksBody }),
+  requireAuth,
+  requireSelfOrAdmin,
+  clickLimiter,
+  async (req, res) =>
+    res.json(await service.bankClicks(req.params.userId, req.body.clicks)),
+);
+
+usersRouter.post(
+  "/:userId/upgrades",
+  validate({ params: userIdParams, body: upgradeBody }),
+  requireAuth,
+  requireSelfOrAdmin,
+  async (req, res) =>
+    res
+      .status(201)
+      .json(await service.purchaseUpgrade(req.params.userId, req.body.upgrade)),
+);

@@ -1,61 +1,77 @@
 import mongoose from "mongoose";
-import { UPGRADES } from "../constants.js";
+import { UPGRADE_IDS } from "../game/balance.js";
+import { ROLES } from "../game/enums.js";
 
 const userSchema = new mongoose.Schema(
   {
-    username: { type: String, required: true, unique: true },
-    password: { type: String, required: true },
+    username: { type: String, required: true, unique: true, trim: true },
+    passwordHash: { type: String, required: true, select: false },
     firstName: String,
     lastName: String,
     profilePicture: String,
-    role: {
-      type: String,
-      enum: ["ADMIN", "USER"],
-      required: true,
-    },
-    coins: { type: Number, required: true },
-    rollCost: { type: Number, required: false },
-    coinsPerClick: { type: Number, required: false },
-    critChance: { type: Number, required: false },
+    role: { type: String, enum: ROLES, required: true, default: "USER" },
+    coins: { type: Number, required: true, default: 500, min: 0 },
   },
-  { collection: "users" }
+  { collection: "users" },
 );
 
 const upgradeSchema = new mongoose.Schema(
   {
     userId: { type: String, required: true },
-    upgrade: {
-      type: String,
-      enum: UPGRADES,
-      required: true,
-    }, // TODO: define upgrade enums
+    upgrade: { type: String, enum: UPGRADE_IDS, required: true },
   },
-  { collection: "upgrades" }
+  { collection: "upgrades" },
 );
+
+upgradeSchema.index({ userId: 1, upgrade: 1 }, { unique: true });
 
 const usersModel = mongoose.model("users", userSchema);
 const upgradesModel = mongoose.model("upgrades", upgradeSchema);
 
-export const createUser = (user) =>
-  usersModel.create({ ...user, role: "USER", coins: 500 });
+const PUBLIC_FIELDS = "username firstName lastName profilePicture role coins";
 
-export const findAllUsers = () => usersModel.find();
+export const createUser = (user) =>
+  usersModel.create(user).then((doc) => findUserById(doc._id));
+
+export const findAllUsers = () =>
+  usersModel.find({}, PUBLIC_FIELDS).lean().exec();
+
+export const findUserById = (userId) =>
+  usersModel.findById(userId, PUBLIC_FIELDS).lean().exec();
 
 export const findUserByUsername = (username) =>
-  usersModel.findOne({ username });
+  usersModel.findOne({ username }, PUBLIC_FIELDS).lean().exec();
 
-export const findUserByCredentials = (username, password) =>
-  usersModel.findOne({ username, password });
+export const findUserByUsernameForAuth = (username) =>
+  usersModel
+    .findOne({ username }, `${PUBLIC_FIELDS} passwordHash`)
+    .lean()
+    .exec();
 
-export const findUserById = (id) => usersModel.findOne({ _id: id });
+export const updateUserById = (userId, fields) =>
+  usersModel
+    .findByIdAndUpdate(userId, fields, {
+      new: true,
+      runValidators: true,
+      projection: PUBLIC_FIELDS,
+    })
+    .lean()
+    .exec();
 
-export const updateUserInfoByUserId = (userId, userInfo) =>
-  usersModel.updateOne({ _id: userId }, { $set: userInfo });
-
-export const updateCoinsByUserId = (userId, coins) =>
-  usersModel.updateOne({ _id: userId }, { $set: { coins } });
+// Returns null when the balance guard fails, making the read-check-write a
+// single atomic step that concurrent requests cannot interleave.
+export const adjustCoins = (userId, delta, minimumBalance = 0) =>
+  usersModel
+    .findOneAndUpdate(
+      { _id: userId, coins: { $gte: minimumBalance } },
+      { $inc: { coins: delta } },
+      { new: true, projection: PUBLIC_FIELDS },
+    )
+    .lean()
+    .exec();
 
 export const createUpgrade = (userId, upgrade) =>
   upgradesModel.create({ userId, upgrade });
 
-export const findUpgradesByUserId = (userId) => upgradesModel.find({ userId });
+export const findUpgradeIdsByUserId = (userId) =>
+  upgradesModel.distinct("upgrade", { userId }).exec();
