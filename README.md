@@ -1,176 +1,198 @@
 # cat-collector-backend
 
-Express + MongoDB API for Cat Collector, a gacha clicker game. Players earn coins by
-clicking, spend them rolling for cats, and buy upgrades that improve their luck, crit
-rate and roll cost.
+Cat Collector is a gacha clicker game. This Express and MongoDB API controls the game data.
 
-The server is authoritative for all currency. Clients report _that_ a click happened;
-the server decides what it was worth.
+Players click to earn coins. They use the coins to roll for cats and buy upgrades.
 
-## Running it
+The server controls all coin values. The client reports each click, and the server calculates its value.
+
+## Run the server
 
 ```bash
-nvm use            # Node 22+
+nvm use                 # Use Node 22 or a later version.
 npm install
-cp .env.example .env   # then fill in the blanks
-npm run dev        # or: npm start
+cp .env.example .env    # Add the required values to the new file.
+npm run dev             # Or run: npm start
 ```
 
-| Script           | Purpose                                     |
-| ---------------- | ------------------------------------------- |
-| `npm start`      | Run the server                              |
-| `npm run dev`    | Run with `node --watch` auto-restart        |
-| `npm run lint`   | ESLint                                      |
-| `npm run format` | Prettier                                    |
-| `npm run check`  | Assert-based check of the game-balance math |
+| Script           | Purpose                              |
+| ---------------- | ------------------------------------ |
+| `npm start`      | Start the server                     |
+| `npm run dev`    | Start the server with `node --watch` |
+| `npm run lint`   | Run ESLint                           |
+| `npm run format` | Run Prettier                         |
+| `npm run check`  | Check the game balance calculations  |
 
 ### Environment
 
-Every variable is validated at boot; the process exits with a readable error if any
-are missing or malformed.
+The server checks each environment variable when it starts. If a value is absent or not valid, the process prints an error and stops.
 
-| Variable               | Required | Description                                         |
-| ---------------------- | -------- | --------------------------------------------------- |
-| `DB_CONNECTION_STRING` | yes      | MongoDB URI (also backs the session store)          |
-| `SESSION_SECRET`       | yes      | ≥32 chars, e.g. `openssl rand -hex 32`              |
-| `CORS_ORIGINS`         | yes      | Comma-separated allowed browser origins             |
-| `NODE_ENV`             | no       | `development` (default), `test`, `production`       |
-| `PORT`                 | no       | Default `4000`                                      |
-| `SESSION_TTL_DAYS`     | no       | Session cookie lifetime, default `7`                |
-| `SYNC_INDEXES`         | no       | Build indexes at boot; use in production, see below |
+| Variable               | Required | Description                                               |
+| ---------------------- | -------- | --------------------------------------------------------- |
+| `DB_CONNECTION_STRING` | yes      | MongoDB URI that also supports the session store          |
+| `SESSION_SECRET`       | yes      | A string with at least 32 characters                      |
+| `CORS_ORIGINS`         | yes      | Allowed browser origins, with a comma between each origin |
+| `NODE_ENV`             | no       | `development` (default), `test`, or `production`          |
+| `PORT`                 | no       | Server port, with a default value of `4000`               |
+| `SESSION_TTL_DAYS`     | no       | Session cookie life, with a default value of `7` days     |
+| `SYNC_INDEXES`         | no       | Build the production indexes when the server starts       |
 
-Indexes are created automatically outside production (`autoIndex`). In production
-`autoIndex` is off, so run one deploy with `SYNC_INDEXES=true` after any index change.
-**The unique indexes are load-bearing** — they are what prevent duplicate cat
-ownership, duplicate upgrade purchases and duplicate usernames under concurrency.
+Outside production, Mongoose builds indexes with `autoIndex`. Production turns off `autoIndex`.
+
+After an index change, deploy once with `SYNC_INDEXES=true`. The unique indexes prevent duplicate records for these items:
+
+- Cat ownership
+- Upgrade purchases
+- Usernames
 
 ### Data
 
-The `rarities` collection is the cat catalog (`{ breed, rarity }`) and must be seeded.
-Rarity codes are `C`, `U`, `R`, `E`, `L`, `M`. A rarity with no cats seeded is simply
-never rolled.
+The `rarities` collection is the cat catalog. Each record has the shape `{ breed, rarity }`.
+
+Add the catalog records before you start the game. The rarity codes are `C`, `U`, `R`, `E`, `L`, and `M`.
+
+The roll process does not select a rarity that contains no cats.
 
 ## Architecture
 
-```
+```text
 src/
-  server.js          boot: env + db connection, listen, graceful shutdown
-  app.js             express app: security middleware, routers, error handling
-  config.js          validated environment
-  http.js            errors, auth/authz middleware, validation, rate limits
+  server.js          start the server, connect to the database, and stop safely
+  app.js             configure Express middleware, routers, and error handlers
+  config.js          check the environment configuration
+  http.js            define errors, access checks, validation, and rate limits
   game/
-    balance.js       tuning constants and the upgrade table
-    enums.js         rarities, roles, upgrade kinds
-    stats.js         pure stat derivation and gacha selection
-    stats.check.js   runnable assertions for the above
-  users/             dao (persistence) / service (rules) / routes (http)
-  cats/              dao (persistence) / service (rules) / routes (http)
+    balance.js       store balance constants and upgrade data
+    enums.js         store rarities, roles, and upgrade types
+    stats.js         calculate stats and select gacha results
+    stats.check.js   check the stat calculations
+  users/             store the user DAO, service, and HTTP routes
+  cats/              store the cat DAO, service, and HTTP routes
 ```
 
-Routes only speak HTTP. Services hold game rules and are usable without a request.
-DAOs hold persistence. Adding an upgrade tier is a single entry in
-`game/balance.js` — costs, odds and effects are all data.
+Routes process HTTP requests. Services apply the game rules. DAOs read and change stored data.
 
-Player stats (`rollCost`, `coinsPerClick`, `critChance`) are **derived on read** from
-owned cats and upgrades. They are never stored, so they cannot drift.
+Add one entry to `game/balance.js` for each new upgrade tier. The entry contains its cost, odds, and effects.
+
+The service calculates `rollCost`, `coinsPerClick`, and `critChance` from the owned cats and upgrades. The database does not store these values.
 
 ## API
 
-All responses are JSON. Errors are `{ "message": "..." }`.
-Auth is a session cookie; send `credentials: "include"`.
+All responses use JSON. Each error has the shape `{ "message": "..." }`.
 
-**Access:** _public_ · _auth_ (signed in) · _self_ (the target user, or an admin) ·
-_admin_.
+Authentication uses a session cookie. Send requests with `credentials: "include"`.
 
-| Method   | Path                                  | Access | Notes                                      |
-| -------- | ------------------------------------- | ------ | ------------------------------------------ |
-| `POST`   | `/api/users/signup`                   | public | `{username, password}` → 201               |
-| `POST`   | `/api/users/signin`                   | public | `{username, password}`                     |
-| `POST`   | `/api/users/signout`                  | public | 204                                        |
-| `GET`    | `/api/users`                          | admin  | All users                                  |
-| `GET`    | `/api/users/ranked`                   | auth   | Users ranked by cats owned                 |
-| `GET`    | `/api/users/me`                       | auth   | Current user                               |
-| `GET`    | `/api/users/by-username/:username`    | auth   |                                            |
-| `GET`    | `/api/users/:userId/data`             | self   | Profile + cats, favorites, upgrades, stats |
-| `PUT`    | `/api/users/:userId`                  | admin  | Partial update                             |
-| `POST`   | `/api/users/:userId/clicks`           | self   | `{clicks}` → coins granted server-side     |
-| `POST`   | `/api/users/:userId/upgrades`         | self   | `{upgrade}` → 201                          |
-| `GET`    | `/api/users/:userId/cats`             | auth   | Owned breeds                               |
-| `GET`    | `/api/users/:userId/favorites`        | auth   |                                            |
-| `POST`   | `/api/users/:userId/favorites`        | self   | `{breed}` → 201, idempotent                |
-| `DELETE` | `/api/users/:userId/favorites/:breed` | self   | 204                                        |
-| `POST`   | `/api/users/:userId/rolls`            | self   | Roll for a cat                             |
-| `GET`    | `/api/cats/rarities`                  | public | Catalog                                    |
-| `GET`    | `/api/cats/rarities/:rarity`          | public | Breeds of one rarity                       |
-| `GET`    | `/api/info/odds`                      | public | Drop tables                                |
-| `GET`    | `/api/info/multipliers`               | public | Coin multiplier per rarity                 |
-| `GET`    | `/api/info/upgrades`                  | public | Upgrade kinds, tiers and costs             |
-| `GET`    | `/health`                             | public |                                            |
+Access values have these meanings:
 
-Rate limits apply to sign-in/sign-up, clicks and rolls; exceeding them returns 429.
+- `public`: No session is necessary.
+- `auth`: The user must sign in.
+- `self`: The target user or an administrator can use the route.
+- `admin`: Only an administrator can use the route.
+
+| Method   | Path                                  | Access     | Notes                                       |
+| -------- | ------------------------------------- | ---------- | ------------------------------------------- |
+| `POST`   | `/api/users/signup`                   | public     | Send `{username, password}`                 |
+| `POST`   | `/api/users/signin`                   | public     | Send `{username, password}`                 |
+| `POST`   | `/api/users/signout`                  | public     | Return status 204                           |
+| `GET`    | `/api/users`                          | admin      | Get all users                               |
+| `GET`    | `/api/users/ranked`                   | auth       | Get users in order of their owned cat count |
+| `GET`    | `/api/users/me`                       | auth       | Get the current user                        |
+| `GET`    | `/api/users/by-username/:username`    | auth       | Find one user by username                   |
+| `GET`    | `/api/users/:userId/data`             | self       | Get the profile and game data               |
+| `PUT`    | `/api/users/:userId`                  | self/admin | Update a profile or administrator fields    |
+| `POST`   | `/api/users/:userId/clicks`           | self       | Send `{clicks}` to get coins                |
+| `POST`   | `/api/users/:userId/upgrades`         | self       | Send `{upgrade}` to buy an upgrade          |
+| `GET`    | `/api/users/:userId/cats`             | auth       | Get the owned breeds                        |
+| `GET`    | `/api/users/:userId/favorites`        | auth       | Get the favorite breeds                     |
+| `POST`   | `/api/users/:userId/favorites`        | self       | Send `{breed}` to add a favorite            |
+| `DELETE` | `/api/users/:userId/favorites/:breed` | self       | Delete a favorite and return status 204     |
+| `POST`   | `/api/users/:userId/rolls`            | self       | Roll for a cat                              |
+| `GET`    | `/api/cats/rarities`                  | public     | Get the cat catalog                         |
+| `GET`    | `/api/cats/rarities/:rarity`          | public     | Get the breeds for one rarity               |
+| `GET`    | `/api/info/odds`                      | public     | Get the drop tables                         |
+| `GET`    | `/api/info/multipliers`               | public     | Get the coin multiplier for each rarity     |
+| `GET`    | `/api/info/upgrades`                  | public     | Get the upgrade types, tiers, and costs     |
+| `GET`    | `/health`                             | public     | Check the server                            |
+
+Rate limits apply to authentication requests, clicks, and rolls. The server returns status 429 when a request exceeds a limit.
 
 ### Clicks
 
-```
+```text
 POST /api/users/:userId/clicks   { "clicks": 25 }
 → { "earned": 1300, "crits": 0, "coins": 1800, "coinsPerClick": 52, "critChance": 0.005 }
 ```
 
-The client reports how many clicks occurred (max 25 per request). The server applies
-its own `coinsPerClick`, rolls crits itself, and returns the authoritative balance.
+The client reports a maximum of 25 clicks in one request. The server uses its own `coinsPerClick` value.
+
+The server also selects critical clicks. The response contains the new coin balance.
 
 ### Rolls
 
-```
+```text
 POST /api/users/:userId/rolls
 → { "breed": "bengal", "rarity": "R", "duplicate": false, "addedCoins": 0,
     "coins": 1700, "rollCost": 130, "coinsPerClick": 62, "critChance": 0.005 }
 ```
 
-Duplicates refund `addedCoins` instead of granting a cat.
+A duplicate cat gives the user `addedCoins`. A new cat adds the breed to the user collection.
 
-## Breaking changes for the client
+## Client contract changes
 
-This rewrite changes the contract. Every item below needs a frontend change.
+This API changed the old client contract. The frontend must use the rules in this section.
 
-**Authentication is now mandatory.** Every `/api/users/*` and per-user cats route
-requires a session cookie, and acting on another user's data returns 403.
+### Authentication requirement
 
-**Existing passwords will not work.** Passwords are bcrypt-hashed in a new
-`passwordHash` field; the old plaintext `password` field is ignored. Existing accounts
-must be reset or migrated.
+Each `/api/users/*` route requires a session unless the API table marks it as public. Each user cat route also requires a session.
 
-**Endpoints removed or moved:**
+The server returns status 403 when a user requests protected data for a different user.
 
-| Before                                         | After                                        |
-| ---------------------------------------------- | -------------------------------------------- |
-| `PUT /api/users/:userId/coins`                 | **removed** — use `POST .../clicks`          |
-| `GET /api/cats/roll/:userId`                   | `POST /api/users/:userId/rolls`              |
-| `POST /api/users/signup/user`                  | `POST /api/users/signup`                     |
-| `GET /api/users/:username`                     | `GET /api/users/by-username/:username`       |
-| `GET /api/cats/ownerships/:userId`             | `GET /api/users/:userId/cats`                |
-| `GET /api/cats/favorites/:userId`              | `GET /api/users/:userId/favorites`           |
-| `POST /api/cats/favorites/:userId`             | `POST /api/users/:userId/favorites`          |
-| `DELETE /api/cats/favorites/:userId/:favorite` | `DELETE /api/users/:userId/favorites/:breed` |
-| `POST /api/users/:userId/upgrade`              | `POST /api/users/:userId/upgrades`           |
+### Password storage
 
-**Response shapes:**
+The server stores new passwords as bcrypt hashes in `passwordHash`. The server ignores the old plaintext `password` field.
 
-- No user response ever contains `password`/`passwordHash`.
-- `signin`/`signup` return the safe user projection, not the raw document.
-- `signup` returns 201; `signout` returns 204 with no body.
-- Adding a favorite returns 201; removing one returns 204 with no body.
-- `GET /api/cats/rarities` returns `{breed, rarity}` without `_id`/`__v`.
-- Roll responses include the resulting `coins` balance.
-- Upgrade purchase returns `{upgrade, upgrades, coins, rollCost, coinsPerClick, critChance}`.
-- Mongo `updateOne` write results are no longer returned; endpoints return the
-  updated resource.
+Reset or migrate each old account before its next sign-in attempt.
 
-**Status codes:** duplicate username, duplicate upgrade → 409. Unauthenticated → 401.
-Not the owner → 403. Malformed input → 400 with a description of the problem.
+### Endpoint changes
 
-**Signup validation:** username 3–32 chars (letters, digits, `.`, `-`, `_`),
-password ≥8 chars.
+| Before                                         | After                                      |
+| ---------------------------------------------- | ------------------------------------------ |
+| `PUT /api/users/:userId/coins`                 | Use `POST /api/users/:userId/clicks`       |
+| `GET /api/cats/roll/:userId`                   | Use `POST /api/users/:userId/rolls`        |
+| `POST /api/users/signup/user`                  | Use `POST /api/users/signup`               |
+| `GET /api/users/:username`                     | Use `GET /api/users/by-username/:username` |
+| `GET /api/cats/ownerships/:userId`             | Use `GET /api/users/:userId/cats`          |
+| `GET /api/cats/favorites/:userId`              | Use `GET /api/users/:userId/favorites`     |
+| `POST /api/cats/favorites/:userId`             | Use `POST /api/users/:userId/favorites`    |
+| `DELETE /api/cats/favorites/:userId/:favorite` | Use `DELETE .../favorites/:breed`          |
+| `POST /api/users/:userId/upgrade`              | Use `POST /api/users/:userId/upgrades`     |
 
-**Env vars:** `FRONTEND_URL_DEV` and `FRONTEND_URL_PROD` are replaced by the single
-comma-separated `CORS_ORIGINS`. `SESSION_SECRET` is now required.
+### Response shapes
+
+- User responses omit `password` and `passwordHash`.
+- `signin` and `signup` return the public user fields.
+- `signup` returns status 201.
+- `signout` returns status 204 with no body.
+- A favorite POST returns status 201.
+- A favorite DELETE returns status 204 with no body.
+- `GET /api/cats/rarities` returns `{breed, rarity}` without `_id` or `__v`.
+- A roll response contains the new `coins` balance.
+- An upgrade response contains `{upgrade, upgrades, coins, rollCost, coinsPerClick, critChance}`.
+- An update endpoint returns the updated resource.
+
+### Status codes
+
+- A duplicate username or upgrade returns status 409.
+- A request without authentication returns status 401.
+- A request for a different user returns status 403.
+- Input that is not valid returns status 400 with a problem description.
+
+### Sign-up validation
+
+A username must have 3 through 32 characters. Use only letters, digits, dots, dashes, and underscores.
+
+A password must have at least 8 characters.
+
+### Environment variable changes
+
+Use `CORS_ORIGINS` instead of `FRONTEND_URL_DEV` and `FRONTEND_URL_PROD`. You must also set `SESSION_SECRET`.

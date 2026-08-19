@@ -97,8 +97,8 @@ export const updateUserById = (userId, fields) =>
     .lean()
     .exec();
 
-// Returns null when the balance guard fails, making the read-check-write a
-// single atomic step that concurrent requests cannot interleave.
+// This operation returns null if the balance check fails. Concurrent requests
+// cannot change the result of this atomic operation.
 export const adjustCoins = (userId, delta, minimumBalance = 0) =>
   usersModel
     .findOneAndUpdate(

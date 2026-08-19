@@ -3,12 +3,12 @@ export const ROLL_COST_GROWTH_RATE = 1.3;
 export const BASE_COINS_PER_CLICK = 50.0;
 export const BASE_CRIT_CHANCE = 0.005;
 
-// Previously lived only in the client, which made coin income client-authoritative.
-// Value taken from the upgrade descriptions this table replaces.
+// The old client stored this value and controlled the coin income.
+// The old upgrade descriptions specify this value.
 export const CRIT_MULTIPLIER = 28.5;
 
-// Bounds how many clicks one request may bank. Combined with the click rate
-// limiter this caps the maximum coin income the server will grant over time.
+// This value limits the clicks in one request. The click rate limit also
+// controls the maximum coin income that the server gives in a period.
 export const MAX_CLICKS_PER_REQUEST = 25;
 
 export const RARITY_TO_COIN_MULTIPLIER = {
@@ -29,8 +29,8 @@ export const STANDARD_CAT_VALUES = {
   M: 5.0,
 };
 
-// Weights, not probabilities: LUCK2 sums to 0.96 and LUCK3 to 1.01. Selection
-// normalises by the table total, so these reproduce the shipped drop rates.
+// These values are weights. LUCK2 has a total of 0.96, and LUCK3 has a total
+// of 1.01. The selection code uses the total to keep the specified drop rates.
 export const BASE_ODDS = {
   C: 0.8,
   U: 0.15,

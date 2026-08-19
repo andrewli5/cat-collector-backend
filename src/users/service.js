@@ -7,8 +7,8 @@ import * as dao from "./dao.js";
 
 const BCRYPT_ROUNDS = 12;
 
-// Verified even when the username is unknown so that sign-in timing does not
-// reveal which accounts exist.
+// The sign-in process verifies this hash for an unknown username. Thus, the
+// response time does not show if an account exists.
 const ABSENT_USER_HASH = bcrypt.hashSync("absent-user", BCRYPT_ROUNDS);
 
 const withoutHash = ({ passwordHash, ...user }) => user;
@@ -18,7 +18,8 @@ export async function signUp({ username, password, profilePicture }) {
   try {
     return await dao.createUser({ username, passwordHash, profilePicture });
   } catch (err) {
-    if (isDuplicateKeyError(err)) throw httpError(409, "Username taken.");
+    if (isDuplicateKeyError(err))
+      throw httpError(409, "This username is not available.");
     throw err;
   }
 }
@@ -29,7 +30,8 @@ export async function signIn(username, password) {
     password,
     user?.passwordHash ?? ABSENT_USER_HASH,
   );
-  if (!user || !valid) throw httpError(401, "Invalid credentials.");
+  if (!user || !valid)
+    throw httpError(401, "The username or password is not correct.");
   return withoutHash(user);
 }
 
@@ -52,7 +54,7 @@ export async function listRankedUsers(page, pageSize) {
 
 export async function getUserByUsername(username) {
   const user = await dao.findUserByUsername(username);
-  if (!user) throw httpError(404, "User not found.");
+  if (!user) throw httpError(404, "The user does not exist.");
   return user;
 }
 
@@ -62,7 +64,7 @@ export async function getUserData(userId) {
     catsService.getPlayerStats(userId),
     catsService.getFavoriteBreeds(userId),
   ]);
-  if (!user) throw httpError(404, "User not found.");
+  if (!user) throw httpError(404, "The user does not exist.");
 
   const { ownedBreeds, ownedRarities, ...stats } = player;
   return { ...user, cats: ownedBreeds, favorites, ...stats };
@@ -71,10 +73,11 @@ export async function getUserData(userId) {
 export async function updateUser(userId, fields) {
   try {
     const user = await dao.updateUserById(userId, fields);
-    if (!user) throw httpError(404, "User not found.");
+    if (!user) throw httpError(404, "The user does not exist.");
     return user;
   } catch (err) {
-    if (isDuplicateKeyError(err)) throw httpError(409, "Username taken.");
+    if (isDuplicateKeyError(err))
+      throw httpError(409, "This username is not available.");
     throw err;
   }
 }
@@ -87,26 +90,26 @@ export async function bankClicks(userId, clicks) {
     clicks,
   );
   const user = await dao.adjustCoins(userId, earned);
-  if (!user) throw httpError(404, "User not found.");
+  if (!user) throw httpError(404, "The user does not exist.");
   return { earned, crits, coins: user.coins, coinsPerClick, critChance };
 }
 
 export async function purchaseUpgrade(userId, upgrade) {
   const { ownedRarities, upgrades } = await catsService.getPlayerStats(userId);
   if (upgrades.includes(upgrade)) {
-    throw httpError(409, "Upgrade already purchased.");
+    throw httpError(409, "The user already owns this upgrade.");
   }
 
   const { cost } = UPGRADES[upgrade];
   const user = await dao.adjustCoins(userId, -cost, cost);
-  if (!user) throw httpError(400, "Not enough coins.");
+  if (!user) throw httpError(400, "The user does not have enough coins.");
 
   try {
     await dao.createUpgrade(userId, upgrade);
   } catch (err) {
     await dao.adjustCoins(userId, cost);
     if (isDuplicateKeyError(err)) {
-      throw httpError(409, "Upgrade already purchased.");
+      throw httpError(409, "The user already owns this upgrade.");
     }
     throw err;
   }

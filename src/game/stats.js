@@ -40,8 +40,8 @@ export function deriveStats(ownedRarities, ownedUpgrades) {
 export const duplicateCoinValue = (rarity, rollCost) =>
   Math.floor(STANDARD_CAT_VALUES[rarity] * rollCost);
 
-// `available` restricts the draw to rarities that actually have cats seeded,
-// so an unpopulated rarity can never yield an empty breed list.
+// `available` limits the draw to rarities that contain cats. Thus, the draw
+// does not select a rarity with an empty breed list.
 export function pickRarity(odds, available, rand = Math.random) {
   const pool = RARITIES.filter((r) => odds[r] > 0 && available.has(r));
   if (pool.length === 0) return null;

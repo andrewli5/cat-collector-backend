@@ -15,7 +15,7 @@ export const isDuplicateKeyError = (err) => err?.code === 11000;
 
 export const objectId = z
   .string()
-  .regex(/^[0-9a-f]{24}$/i, "invalid id")
+  .regex(/^[0-9a-f]{24}$/i, "The ID is not valid.")
   .transform((id) => id.toLowerCase());
 
 export const userIdParams = z.object({ userId: objectId });
@@ -37,19 +37,23 @@ export const validate = (schemas) => (req, res, next) => {
 export async function requireAuth(req, res, next) {
   const userId = req.session?.userId;
   const user = userId ? await usersDao.findUserById(userId) : null;
-  if (!user) return next(httpError(401, "Not signed in."));
+  if (!user) return next(httpError(401, "Sign in to continue."));
   req.user = user;
   next();
 }
 
 export const requireAdmin = (req, res, next) =>
-  next(req.user.role === "ADMIN" ? undefined : httpError(403, "Forbidden."));
+  next(
+    req.user.role === "ADMIN"
+      ? undefined
+      : httpError(403, "You do not have permission."),
+  );
 
 export const requireSelfOrAdmin = (req, res, next) =>
   next(
     req.user.role === "ADMIN" || req.params.userId === String(req.user._id)
       ? undefined
-      : httpError(403, "Forbidden."),
+      : httpError(403, "You do not have permission."),
   );
 
 const limiter = (windowMs, limit) =>
@@ -59,7 +63,7 @@ const limiter = (windowMs, limit) =>
     standardHeaders: "draft-8",
     legacyHeaders: false,
     keyGenerator: (req) => req.session?.userId ?? ipKeyGenerator(req.ip),
-    handler: (req, res, next) => next(httpError(429, "Too many requests.")),
+    handler: (req, res, next) => next(httpError(429, "Send fewer requests.")),
   });
 
 export const authLimiter = limiter(15 * 60_000, 30);
@@ -67,7 +71,7 @@ export const clickLimiter = limiter(60_000, 120);
 export const rollLimiter = limiter(60_000, 60);
 
 export const notFound = (req, res, next) =>
-  next(httpError(404, `Cannot ${req.method} ${req.path}`));
+  next(httpError(404, `No route matches ${req.method} ${req.path}.`));
 
 const statusFor = (err) => {
   if (err.status) return err.status;
@@ -76,12 +80,12 @@ const statusFor = (err) => {
   return 500;
 };
 
-// eslint-disable-next-line no-unused-vars -- Express detects error handlers by arity
+// eslint-disable-next-line no-unused-vars -- Express uses the parameter count to identify error handlers.
 export function errorHandler(err, req, res, next) {
   const status = statusFor(err);
   const deliberate = err instanceof HttpError || status < 500;
   if (!deliberate) console.error(err);
   res.status(status).json({
-    message: deliberate ? err.message : "Internal server error.",
+    message: deliberate ? err.message : "The server had an internal error.",
   });
 }

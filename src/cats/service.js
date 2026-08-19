@@ -67,7 +67,8 @@ export async function getCatsByRarity(rarity) {
 
 async function assertKnownBreed(breed) {
   const { rarityOf } = await getCatalog();
-  if (!rarityOf.has(breed)) throw httpError(404, "Unknown breed.");
+  if (!rarityOf.has(breed))
+    throw httpError(404, "The cat breed does not exist.");
 }
 
 export async function addFavorite(userId, breed) {
@@ -80,7 +81,7 @@ export async function addFavorite(userId, breed) {
 
 export async function removeFavorite(userId, breed) {
   const { deletedCount } = await dao.removeFavorite(userId, breed);
-  if (deletedCount === 0) throw httpError(404, "Favorite not found.");
+  if (deletedCount === 0) throw httpError(404, "The favorite does not exist.");
   return { userId, breed };
 }
 
@@ -89,7 +90,7 @@ export async function rollForUser(userId) {
     await Promise.all([getPlayerStats(userId), getCatalog()]);
 
   const rarity = pickRarity(oddsFor(upgrades), catalog.stockedRarities);
-  if (!rarity) throw httpError(503, "No cats are available to roll.");
+  if (!rarity) throw httpError(503, "The catalog has no cats for this roll.");
   const breed = pickBreed(catalog.byRarity.get(rarity));
   const reward = duplicateCoinValue(rarity, rollCost);
   const owned = ownedBreeds.includes(breed);
@@ -99,7 +100,8 @@ export async function rollForUser(userId) {
     (owned ? reward : 0) - rollCost,
     rollCost,
   );
-  if (!charged) throw httpError(400, "Not enough coins to roll.");
+  if (!charged)
+    throw httpError(400, "The user does not have enough coins for a roll.");
 
   const result = (duplicate, addedCoins, coins) => ({
     breed,

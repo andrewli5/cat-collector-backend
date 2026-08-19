@@ -24,7 +24,7 @@ assert.deepEqual(deriveStats(cats, ["CRIT2", "COST2", "COST1"]), {
   critChance: 0.02,
 });
 
-// highest owned tier wins regardless of purchase order
+// Use the highest owned tier for each purchase order.
 assert.equal(deriveStats([], ["CRIT3", "CRIT1"]).critChance, 0.04);
 assert.equal(deriveStats([], ["CRIT1", "CRIT3"]).critChance, 0.04);
 assert.equal(deriveStats([], ["COST1", "COST3"]).rollCost, 20);
@@ -34,18 +34,18 @@ assert.equal(oddsFor(["CRIT3"]), BASE_ODDS);
 
 const all = new Set(["C", "U", "R", "E", "L", "M"]);
 
-// selection is total: every draw lands on a rarity that is both weighted and stocked
+// Each draw selects a rarity that has a weight and contains cats.
 for (const odds of [
   BASE_ODDS,
   ...["LUCK1", "LUCK2", "LUCK3"].map((u) => UPGRADES[u].odds),
 ]) {
   for (let i = 0; i <= 1000; i++) {
     const rarity = pickRarity(odds, all, () => i / 1000);
-    assert.ok(odds[rarity] > 0, `unweighted rarity ${rarity} at ${i}`);
+    assert.ok(odds[rarity] > 0, `Rarity ${rarity} has no weight at ${i}.`);
   }
 }
 
-// zero-weight and unstocked rarities are never drawn
+// Do not select rarities with no weight or no cats.
 assert.notEqual(
   pickRarity(BASE_ODDS, all, () => 1 - Number.EPSILON),
   "M",
@@ -59,7 +59,7 @@ assert.equal(
   null,
 );
 
-// weights are normalised by their total, which is 1.01 for LUCK3
+// Divide each LUCK3 weight by the total of 1.01.
 assert.equal(
   pickRarity(UPGRADES.LUCK3.odds, all, () => 0.2 / 1.01),
   "U",

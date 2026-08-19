@@ -19,7 +19,10 @@ const username = z
   .trim()
   .min(3)
   .max(32)
-  .regex(/^[\w.-]+$/, "letters, digits, dot, dash and underscore only");
+  .regex(
+    /^[\w.-]+$/,
+    "Use only letters, digits, dots, dashes, and underscores.",
+  );
 
 const signUpBody = z.object({
   username,
@@ -40,7 +43,10 @@ const updateUserBody = z
     coins: z.int().min(0),
   })
   .partial()
-  .refine((body) => Object.keys(body).length > 0, "no fields to update");
+  .refine(
+    (body) => Object.keys(body).length > 0,
+    "Provide at least one field to update.",
+  );
 
 const rankedUsersQuery = z.object({
   page: z.coerce.number().int().min(1).default(1),
@@ -53,7 +59,7 @@ const requireProfileFieldsOrAdmin = (req, res, next) =>
     req.user.role === "ADMIN" ||
       Object.keys(req.body).every((field) => PROFILE_FIELDS.has(field))
       ? undefined
-      : httpError(403, "Forbidden."),
+      : httpError(403, "You do not have permission."),
   );
 
 const clicksBody = z.object({

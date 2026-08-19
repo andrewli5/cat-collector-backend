@@ -2,7 +2,7 @@
   "type": "module",
   "name": "cat-collector-backend",
   "version": "1.0.0",
-  "description": "Express + MongoDB API for the Cat Collector gacha clicker game",
+  "description": "Express and MongoDB API for the Cat Collector game",
   "main": "src/server.js",
   "engines": {
     "node": ">=22"

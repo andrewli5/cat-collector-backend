@@ -3,7 +3,7 @@ import { createApp } from "./app.js";
 import { config } from "./config.js";
 
 mongoose.connection.on("error", (err) =>
-  console.error(`MongoDB error: ${err.message}`),
+  console.error(`The MongoDB connection has an error: ${err.message}`),
 );
 
 try {
@@ -14,16 +14,16 @@ try {
     );
   }
 } catch (err) {
-  console.error(`Cannot connect to MongoDB: ${err.message}`);
+  console.error(`The server cannot connect to MongoDB: ${err.message}`);
   process.exit(1);
 }
 
 const server = createApp().listen(config.port, () =>
-  console.log(`cat-collector listening on :${config.port} (${config.env})`),
+  console.log(`cat-collector uses port ${config.port} (${config.env})`),
 );
 
 const shutdown = async (signal) => {
-  console.log(`${signal} received, shutting down`);
+  console.log(`The server received ${signal} and will stop.`);
   server.close();
   await mongoose.disconnect();
   process.exit(0);
