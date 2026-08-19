@@ -1,10 +1,10 @@
 # cat-collector-backend
 
-Cat Collector is a gacha clicker game. This Express and MongoDB API controls the game data.
+Cat Collector is a gacha clicker game. This Express API stores the game data in MongoDB.
 
 Players click to earn coins. They use the coins to roll for cats and buy upgrades.
 
-The server controls all coin values. The client reports each click, and the server calculates its value.
+The server controls all coin values. The client reports each click. The server calculates its value.
 
 ## Run the server
 
@@ -51,7 +51,7 @@ The `rarities` collection is the cat catalog. Each record has the shape `{ breed
 
 Add the catalog records before you start the game. The rarity codes are `C`, `U`, `R`, `E`, `L`, and `M`.
 
-The roll process does not select a rarity that contains no cats.
+A roll does not select a rarity that has no cats.
 
 ## Architecture
 

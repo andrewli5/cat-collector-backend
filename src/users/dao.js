@@ -97,8 +97,8 @@ export const updateUserById = (userId, fields) =>
     .lean()
     .exec();
 
-// This operation returns null if the balance check fails. Concurrent requests
-// cannot change the result of this atomic operation.
+// This operation returns null if the balance check fails. With the atomic
+// update, two concurrent requests cannot use the same balance.
 export const adjustCoins = (userId, delta, minimumBalance = 0) =>
   usersModel
     .findOneAndUpdate(

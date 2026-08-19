@@ -14,7 +14,7 @@ try {
     );
   }
 } catch (err) {
-  console.error(`The server cannot connect to MongoDB: ${err.message}`);
+  console.error(`The server could not set up MongoDB: ${err.message}`);
   process.exit(1);
 }
 

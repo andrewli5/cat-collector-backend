@@ -7,8 +7,8 @@ import * as dao from "./dao.js";
 
 const BCRYPT_ROUNDS = 12;
 
-// The sign-in process verifies this hash for an unknown username. Thus, the
-// response time does not show if an account exists.
+// For an unknown username, sign-in verifies this hash. This makes sign-in
+// times similar for known and unknown usernames.
 const ABSENT_USER_HASH = bcrypt.hashSync("absent-user", BCRYPT_ROUNDS);
 
 const withoutHash = ({ passwordHash, ...user }) => user;
