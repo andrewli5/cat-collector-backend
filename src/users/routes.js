@@ -5,6 +5,7 @@ import { ROLES } from "../game/enums.js";
 import {
   authLimiter,
   clickLimiter,
+  httpError,
   requireAdmin,
   requireAuth,
   requireSelfOrAdmin,
@@ -40,6 +41,20 @@ const updateUserBody = z
   })
   .partial()
   .refine((body) => Object.keys(body).length > 0, "no fields to update");
+
+const rankedUsersQuery = z.object({
+  page: z.coerce.number().int().min(1).default(1),
+  pageSize: z.coerce.number().int().min(1).max(100).default(20),
+});
+
+const PROFILE_FIELDS = new Set(["username", "profilePicture"]);
+const requireProfileFieldsOrAdmin = (req, res, next) =>
+  next(
+    req.user.role === "ADMIN" ||
+      Object.keys(req.body).every((field) => PROFILE_FIELDS.has(field))
+      ? undefined
+      : httpError(403, "Forbidden."),
+  );
 
 const clicksBody = z.object({
   clicks: z.int().min(1).max(MAX_CLICKS_PER_REQUEST),
@@ -92,6 +107,19 @@ usersRouter.get("/", requireAuth, requireAdmin, async (req, res) =>
   res.json(await service.listUsers()),
 );
 
+usersRouter.get(
+  "/ranked",
+  requireAuth,
+  validate({ query: rankedUsersQuery }),
+  async (req, res) =>
+    res.json(
+      await service.listRankedUsers(
+        req.validatedQuery.page,
+        req.validatedQuery.pageSize,
+      ),
+    ),
+);
+
 usersRouter.get("/me", requireAuth, (req, res) => res.json(req.user));
 
 usersRouter.get(
@@ -114,7 +142,8 @@ usersRouter.put(
   "/:userId",
   validate({ params: userIdParams, body: updateUserBody }),
   requireAuth,
-  requireAdmin,
+  requireSelfOrAdmin,
+  requireProfileFieldsOrAdmin,
   async (req, res) =>
     res.json(await service.updateUser(req.params.userId, req.body)),
 );

@@ -34,6 +34,47 @@ export const createUser = (user) =>
 export const findAllUsers = () =>
   usersModel.find({}, PUBLIC_FIELDS).lean().exec();
 
+export async function findRankedUsers(offset, limit) {
+  const [result] = await usersModel
+    .aggregate([
+      {
+        $lookup: {
+          from: "ownerships",
+          let: { userId: { $toString: "$_id" } },
+          pipeline: [
+            { $match: { $expr: { $eq: ["$userId", "$$userId"] } } },
+            { $count: "count" },
+          ],
+          as: "ownership",
+        },
+      },
+      {
+        $set: {
+          catsOwned: {
+            $ifNull: [{ $arrayElemAt: ["$ownership.count", 0] }, 0],
+          },
+        },
+      },
+      { $sort: { catsOwned: -1, username: 1, _id: 1 } },
+      {
+        $facet: {
+          users: [
+            { $skip: offset },
+            { $limit: limit },
+            { $project: { username: 1, profilePicture: 1, catsOwned: 1 } },
+          ],
+          metadata: [{ $count: "totalUsers" }],
+        },
+      },
+    ])
+    .exec();
+
+  return {
+    users: result.users,
+    totalUsers: result.metadata[0]?.totalUsers ?? 0,
+  };
+}
+
 export const findUserById = (userId) =>
   usersModel.findById(userId, PUBLIC_FIELDS).lean().exec();
 

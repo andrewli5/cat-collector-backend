@@ -35,6 +35,21 @@ export async function signIn(username, password) {
 
 export const listUsers = () => dao.findAllUsers();
 
+export async function listRankedUsers(page, pageSize) {
+  const [{ users, totalUsers }, catalog] = await Promise.all([
+    dao.findRankedUsers((page - 1) * pageSize, pageSize),
+    catsService.getCatalog(),
+  ]);
+  return {
+    users,
+    page,
+    pageSize,
+    totalUsers,
+    totalPages: Math.ceil(totalUsers / pageSize),
+    totalCats: catalog.cats.length,
+  };
+}
+
 export async function getUserByUsername(username) {
   const user = await dao.findUserByUsername(username);
   if (!user) throw httpError(404, "User not found.");

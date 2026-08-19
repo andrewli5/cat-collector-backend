@@ -88,6 +88,7 @@ _admin_.
 | `POST`   | `/api/users/signin`                   | public | `{username, password}`                     |
 | `POST`   | `/api/users/signout`                  | public | 204                                        |
 | `GET`    | `/api/users`                          | admin  | All users                                  |
+| `GET`    | `/api/users/ranked`                   | auth   | Users ranked by cats owned                 |
 | `GET`    | `/api/users/me`                       | auth   | Current user                               |
 | `GET`    | `/api/users/by-username/:username`    | auth   |                                            |
 | `GET`    | `/api/users/:userId/data`             | self   | Profile + cats, favorites, upgrades, stats |

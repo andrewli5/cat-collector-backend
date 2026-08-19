@@ -21,14 +21,15 @@ export const objectId = z
 export const userIdParams = z.object({ userId: objectId });
 
 export const validate = (schemas) => (req, res, next) => {
-  for (const source of ["params", "body"]) {
+  for (const source of ["params", "query", "body"]) {
     const schema = schemas[source];
     if (!schema) continue;
     const result = schema.safeParse(req[source]);
     if (!result.success) {
       return next(httpError(400, z.prettifyError(result.error)));
     }
-    req[source] = result.data;
+    if (source === "query") req.validatedQuery = result.data;
+    else req[source] = result.data;
   }
   next();
 };
