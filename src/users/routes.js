@@ -19,13 +19,10 @@ const username = z
   .min(3)
   .max(32)
   .regex(/^[\w.-]+$/, "letters, digits, dot, dash and underscore only");
-const name = z.string().trim().max(64);
 
 const signUpBody = z.object({
   username,
   password: z.string().min(8).max(128),
-  firstName: name.optional(),
-  lastName: name.optional(),
   profilePicture: z.string().trim().max(512).optional(),
 });
 
@@ -37,8 +34,6 @@ const signInBody = z.object({
 const updateUserBody = z
   .object({
     username,
-    firstName: name,
-    lastName: name,
     profilePicture: z.string().trim().max(512),
     role: z.enum(ROLES),
     coins: z.int().min(0),

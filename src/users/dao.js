@@ -6,8 +6,6 @@ const userSchema = new mongoose.Schema(
   {
     username: { type: String, required: true, unique: true, trim: true },
     passwordHash: { type: String, required: true, select: false },
-    firstName: String,
-    lastName: String,
     profilePicture: String,
     role: { type: String, enum: ROLES, required: true, default: "USER" },
     coins: { type: Number, required: true, default: 500, min: 0 },
@@ -28,7 +26,7 @@ upgradeSchema.index({ userId: 1, upgrade: 1 }, { unique: true });
 const usersModel = mongoose.model("users", userSchema);
 const upgradesModel = mongoose.model("upgrades", upgradeSchema);
 
-const PUBLIC_FIELDS = "username firstName lastName profilePicture role coins";
+const PUBLIC_FIELDS = "username profilePicture role coins";
 
 export const createUser = (user) =>
   usersModel.create(user).then((doc) => findUserById(doc._id));

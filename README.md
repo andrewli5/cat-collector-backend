@@ -84,7 +84,7 @@ _admin_.
 
 | Method   | Path                                  | Access | Notes                                      |
 | -------- | ------------------------------------- | ------ | ------------------------------------------ |
-| `POST`   | `/api/users/signup`                   | public | `{username, password, ...profile}` → 201   |
+| `POST`   | `/api/users/signup`                   | public | `{username, password}` → 201               |
 | `POST`   | `/api/users/signin`                   | public | `{username, password}`                     |
 | `POST`   | `/api/users/signout`                  | public | 204                                        |
 | `GET`    | `/api/users`                          | admin  | All users                                  |

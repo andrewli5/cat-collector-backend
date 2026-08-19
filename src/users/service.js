@@ -13,10 +13,10 @@ const ABSENT_USER_HASH = bcrypt.hashSync("absent-user", BCRYPT_ROUNDS);
 
 const withoutHash = ({ passwordHash, ...user }) => user;
 
-export async function signUp({ username, password, ...profile }) {
+export async function signUp({ username, password, profilePicture }) {
   const passwordHash = await bcrypt.hash(password, BCRYPT_ROUNDS);
   try {
-    return await dao.createUser({ ...profile, username, passwordHash });
+    return await dao.createUser({ username, passwordHash, profilePicture });
   } catch (err) {
     if (isDuplicateKeyError(err)) throw httpError(409, "Username taken.");
     throw err;
